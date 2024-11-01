@@ -1,4 +1,4 @@
-package arsngrobg.smphook.server;
+package arsngrobg.smphook.server.heap;
 
 /** Set of values that describe units that the JVM recognise when processing heap arguements. */
 public enum HeapUnit {

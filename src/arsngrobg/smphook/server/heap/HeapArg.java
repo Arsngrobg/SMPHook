@@ -1,4 +1,6 @@
-package arsngrobg.smphook.server;
+package arsngrobg.smphook.server.heap;
+
+import arsngrobg.smphook.SMPHookError;
 
 /** Class which wraps a JVM heap argument. Holds a {@code size} and {@link HeapUnit}. */
 public final class HeapArg implements Comparable<HeapArg> {
@@ -19,8 +21,8 @@ public final class HeapArg implements Comparable<HeapArg> {
      * @param unit - the order of magnitude of the heap argument
      */
     public HeapArg(long size, HeapUnit unit) {
-        if (unit == null) throw new IllegalArgumentException("Argument 'unit' cannot be null.");
-        if (size <= 0)    throw new NumberFormatException   ("Argument 'size' cannot be negative OR zero.");
+        if (unit == null) throw SMPHookError.get(SMPHookError.Type.NULL_POINTER);
+        if (size <= 0)    throw SMPHookError.get(SMPHookError.Type.ILLEGAL_HEAP_ARGUMENT_SIZE);
 
         this.size = size;
         this.unit = unit;
