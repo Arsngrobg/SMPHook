@@ -1,2 +1,2 @@
 # SMPHook
-Software for managing a simple home Minecraft server.
+A non-invasive management software for simple home Minecraft: Java Edition servers.
