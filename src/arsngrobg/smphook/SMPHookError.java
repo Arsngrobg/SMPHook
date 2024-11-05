@@ -10,13 +10,18 @@ public final class SMPHookError extends Error {
     public static enum Type {
         NULL_POINTER,
         ILLEGAL_HEAP_ARGUMENT_SIZE,
-        INVALID_HEAP_ARGUMENT_FORMAT
+        INVALID_HEAP_ARGUMENT_FORMAT,
+        MISMATCHED_HEAP_ARGS,
+        SERVER_INIT_FAILURE,
+        INVALID_FILE_EXTENSION
     };
 
     private static final SMPHookError[] CACHE = {
         new SMPHookError(Type.NULL_POINTER,                 "Null value disallowed."),
         new SMPHookError(Type.ILLEGAL_HEAP_ARGUMENT_SIZE,   "Heap argument size provided cannot be negative OR zero."),
-        new SMPHookError(Type.INVALID_HEAP_ARGUMENT_FORMAT, "Argument string provided is not a valid JVM heap argument.")
+        new SMPHookError(Type.INVALID_HEAP_ARGUMENT_FORMAT, "Argument string provided is not a valid JVM heap argument."),
+        new SMPHookError(Type.MISMATCHED_HEAP_ARGS,         "Mismatched JVM heap arguments."),
+        new SMPHookError(Type.INVALID_FILE_EXTENSION,       "Server executable must be a .jar file.")
     };
 
     // assertion for unimplemented errors for error types
@@ -51,7 +56,7 @@ public final class SMPHookError extends Error {
 
     @Override
     public String toString() {
-        return message;
+        return String.format("(%s) %s", type, message);
     }
 
     @Override

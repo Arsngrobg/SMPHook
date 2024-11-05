@@ -28,6 +28,16 @@ public final class HeapArg implements Comparable<HeapArg> {
         this.unit = unit;
     }
 
+    /** @return The heap argument formatted as if it was to be the minimum allocated memory for the heap in the JVM. */
+    public String formatAsMin() {
+        return String.format("-Xms%s", this);
+    }
+
+    /** @return The heap argument formatted as if it was to be the maximum allocated memory for the heap in the JVM. */
+    public String formatAsMax() {
+        return String.format("-Xmx%s", this);
+    }
+
     /** @return The relative size of the JVM heap argument in its {@code unit} */
     public long getSize() {
         return size;
