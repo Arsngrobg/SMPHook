@@ -71,7 +71,7 @@ public final class Server {
     /**
      * Reads a single line of output from the Minecraft server process.
      * This method fetches one line at a time from the server's standard output stream.
-     * It is non-blocking and will return {@code null} if an I/O error occurs or if no data is available.
+     * It is blocking and will return {@code null} if an I/O error occurs or if no data is available.
      * @return the next line of server output, or {@code null} if an error occurs or no data is available.
      */
     public String rawOutput() {

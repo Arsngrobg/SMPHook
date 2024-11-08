@@ -4,11 +4,9 @@ import arsngrobg.smphook.server.Server;
 import arsngrobg.smphook.server.types.HeapArg;
 import arsngrobg.smphook.server.types.HeapArg.Unit;
 
-/** Utility class for ease-of-use functions for the SMPHook. */
+/** Utility class for ease-of-use functionality for the SMPHook. */
 public final class SMPHook {
     private static Server instance;
-
-    private SMPHook() { throw new UnsupportedOperationException("SMPHook is a utility class."); }
 
     /**
      * Takes in the {@code argStr} parameter and parse it as if it was a JVM heap argument (e.g. 3G or 112M).
@@ -32,7 +30,7 @@ public final class SMPHook {
             long size = Long.parseLong(sizePortion);
     
             return new HeapArg(size, unit);
-        } catch (NumberFormatException ignored) { throw new Error(""); }
+        } catch (NumberFormatException ignored) { throw new Error("Invalid heap argument size."); }
     }
 
     /**
@@ -62,13 +60,14 @@ public final class SMPHook {
         return SMPHook.instance;
     }
 
+    private SMPHook() { throw new UnsupportedOperationException("SMPHook is a utility class."); }
+
     public static void main(String[] args) throws Exception {
         server("smp\\server.jar", heapArg("2G"), heapArg("16G"));
 
         String line;
         while ( (line = server().rawOutput()) != null ) {
             System.out.println(line);
-            server().rawInput("/");
         }
     }
 }

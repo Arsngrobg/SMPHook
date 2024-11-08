@@ -1,5 +1,7 @@
 package arsngrobg.smphook.server.types;
 
+import java.util.Objects;
+
 /** Class which wraps a JVM heap argument. Holds a {@code size} and {@link HeapUnit}. */
 public final class HeapArg implements Comparable<HeapArg> {
     /** Set of values that describe units that the JVM recognise when processing heap arguements. */
@@ -72,6 +74,11 @@ public final class HeapArg implements Comparable<HeapArg> {
             long s2 = o.size / (long) Math.pow(1000, powerDifference);
             return Long.compare(s1, s2);
         } else return Long.compare(size, o.size);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(size, unit);
     }
 
     @Override
