@@ -7,8 +7,6 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 
-import arsngrobg.smphook.server.types.HeapArg;
-
 /**
  * Wrapper for a {@link Process} that runs an instance of a Minecraft Java server.
  * On creation, you will be able to access the input and output buffers of the server,
