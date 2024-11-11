@@ -4,6 +4,30 @@ import java.util.Objects;
 
 /** Class which wraps a JVM heap argument. Holds a {@code size} and {@link HeapUnit}. */
 public final class HeapArg implements Comparable<HeapArg> {
+    /**
+     * Parses the given {@code argStr} parameter as if it was a JVM heap argument (e.g. 3G or 112M).
+     * @param argStr - the string to be parsed
+     * @return a {@link HeapArg} object if the {@code argStr} parameter is a valid JVM argument
+     */
+    public static HeapArg fromString(String argStr) {
+        if (argStr == null) throw new Error("nullptr");
+
+        char lastChar = argStr.charAt(argStr.length() - 1);
+        Unit unit = null;
+        for (Unit u : Unit.values()) {
+            unit = u.suffix == lastChar ? u : null;
+        }
+
+        if (unit == null) throw new Error("Invalid unit suffix.");
+
+        try {
+            String sizePortion = argStr.substring(0, argStr.length() - 1);
+            long size = Long.parseLong(sizePortion);
+    
+            return new HeapArg(size, unit);
+        } catch (NumberFormatException ignored) { throw new Error("Invalid heap argument size."); }
+    }
+
     /** Set of values that describe units that the JVM recognise when processing heap arguements. */
     public static enum Unit {
         BYTE    ('B'),
