@@ -6,6 +6,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
+import java.util.Objects;
 
 /**
  * Wrapper for a {@link Process} that runs an instance of a Minecraft Java server.
@@ -51,9 +52,7 @@ public final class Server {
         this.maxHeap = maxHeap;
         this.minHeap = minHeap;
 
-        String minHeapStr = minHeap == null ? "" : minHeap.formatAsMin();
-        String maxHeapStr = maxHeap == null ? "" : maxHeap.formatAsMax();
-        String[] commandTokens = String.format(INIT_COMMAND, minHeapStr, maxHeapStr, jarName).split("\\s+");
+        String[] commandTokens = getInitCommand().split("\\s+");
 
         ProcessBuilder processBuilder = new ProcessBuilder(commandTokens);
         processBuilder.redirectErrorStream(true);
@@ -98,6 +97,14 @@ public final class Server {
         } catch (IOException ignored) { return false; }
     }
 
+    /** @return the command used to initialise the Minecraft server instance. */
+    public String getInitCommand() {
+        String minHeapStr = minHeap == null ? "" : minHeap.formatAsMin();
+        String maxHeapStr = maxHeap == null ? "" : maxHeap.formatAsMax();
+        String command = String.format(INIT_COMMAND, minHeapStr, maxHeapStr, jarName);
+        return command;
+    }
+
     /** @return the name of the JAR file */
     public String getJarName() {
         return jarName;
@@ -116,5 +123,23 @@ public final class Server {
     /** @return the maximum allocated memory for the server's JVM */
     public HeapArg getMaxHeap() {
         return maxHeap;
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(directory, jarName);
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (obj == null || obj.getClass() != getClass()) return false;
+        if (obj == this) return true;
+        Server asServer = (Server) obj;
+        return hashCode() == asServer.hashCode();
+    }
+
+    @Override
+    public String toString() {
+        return String.format("Server[init: %s]", getInitCommand());
     }
 }

@@ -108,7 +108,7 @@ public final class HeapArg implements Comparable<HeapArg> {
     @Override
     public boolean equals(Object obj) {
         if (obj == null || obj.getClass() != getClass()) return false;
-        if (obj == this)                                 return true;
+        if (obj == this) return true;
         HeapArg asHeapArg = (HeapArg) obj;
         return compareTo(asHeapArg) == 0;
     }

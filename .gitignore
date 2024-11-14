@@ -5,6 +5,9 @@ hook.properties
 /.idea
 /.vscode
 
+# Test Server
+/smp
+
 # Compiled class file
 *.class
 
@@ -17,7 +20,7 @@ hook.properties
 # Mobile Tools for Java (J2ME)
 .mtj.tmp/
 
-# Package Files #
+# Package Files
 *.jar
 *.war
 *.nar
