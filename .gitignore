@@ -1,6 +1,3 @@
-# Files With Sensitive Data
-hook.properties
-
 # Project Folders
 /.idea
 /.vscode
