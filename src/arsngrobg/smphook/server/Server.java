@@ -27,6 +27,8 @@ public final class Server {
     private final BufferedWriter inputBuffer;
     private final BufferedReader outputBuffer;
 
+    private boolean finished;
+
     /**
      * Initialises an instance of a Minecraft Java server. As long as the {@code jarPath} points to a valid JAR file,
      * and the {@code minHeap} & {@code maxHeap} arguments
@@ -42,8 +44,13 @@ public final class Server {
         }
 
         int seperationIndex = jarPath.lastIndexOf(File.separator);
-        directory = jarPath.substring(0, seperationIndex);
-        jarName   = jarPath.substring(seperationIndex + 1, jarPath.length());
+        if (seperationIndex != -1) {
+            directory = jarPath.substring(0, seperationIndex);
+            jarName   = jarPath.substring(seperationIndex + 1, jarPath.length());
+        } else {
+            directory = null;
+            jarName   = jarPath;
+        }
 
         if (!jarName.endsWith(FILE_EXTENSION)) {
             throw new Error("The file that jarName points to is not a .jar file.");
@@ -56,12 +63,14 @@ public final class Server {
 
         ProcessBuilder processBuilder = new ProcessBuilder(commandTokens);
         processBuilder.redirectErrorStream(true);
-        processBuilder.directory(new File(directory));
+        if (directory != null) processBuilder.directory(new File(directory));
 
         try {
             process      = processBuilder.start();
             inputBuffer  = new BufferedWriter(new OutputStreamWriter(process.getOutputStream()));
             outputBuffer = new BufferedReader(new InputStreamReader(process.getInputStream()));
+
+            process.onExit().thenAccept(p -> finished = true);
         } catch (IOException ignored) { throw new Error("Server Init Failure."); }
     }
 
@@ -97,12 +106,26 @@ public final class Server {
         } catch (IOException ignored) { return false; }
     }
 
+    /**
+     * Attempts to push a {@code stop} command to the server's input buffer.
+     * If this fails, it will forcefully kill the server process.
+     */
+    public void stop() {
+        boolean success = rawInput("stop");
+        if (!success) process.destroy();
+    }
+
     /** @return the command used to initialise the Minecraft server instance. */
     public String getInitCommand() {
         String minHeapStr = minHeap == null ? "" : minHeap.formatAsMin();
         String maxHeapStr = maxHeap == null ? "" : maxHeap.formatAsMax();
         String command = String.format(INIT_COMMAND, minHeapStr, maxHeapStr, jarName);
         return command;
+    }
+
+    /** @return whether the server instance is running. */
+    public boolean isRunning() {
+        return finished;
     }
 
     /** @return the name of the JAR file */
