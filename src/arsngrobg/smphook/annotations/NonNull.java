@@ -7,7 +7,7 @@ import java.lang.annotation.Target;
 
 /**
  * <h1>Non-Null Parameter</h1>
- * <p>Declares that the parameter annotated with this annotation disallows {@code null} pointers.</p>
+ * <p>Declares that the parameter annotated with this annotation disallows {@code null} pointers as arguments.</p>
  * 
  * @since  1.0
  * @author Arnsgrobg
