@@ -58,8 +58,14 @@ public final class DiscordWebhook {
     }
 
     /**
-     * <p>Attempts to initiate a HTTPS connection with Discord's webhook service using the webhook URL bound by this DiscordWebhook instance.
-     *    If connection fails, the service is unable to send the payload, or the an error is returned from Discord, the method returns {@code false}.
+     * <p>Attempts to initiate a HTTPS connection with Discord's webhook service using the webhook URL bound by this DiscordWebhook instance.</p>
+     * <p>This method returns {@code false} if:
+     *     <ul>
+     *         <li>a HTTPS connection could not be established</li>
+     *         <li>if the service is unable to send the {@code payload}</li>
+     *         <li>if the HTTPS connection has returned any content (typically means error)</li>
+     *         <li>if the {@code payload} is {@code null}</li>
+     *     </ul>
      * </p>
      * 
      * <p>It is important that before sending the payload, make sure that literal strings within the JSON should be escaped.
