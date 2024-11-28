@@ -1,4 +1,4 @@
-package arsngrobg.smphook;
+package arsngrobg.smphook.discord;
 
 import java.io.IOException;
 import java.io.OutputStream;
@@ -8,6 +8,8 @@ import java.net.URISyntaxException;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.util.Objects;
+
+import arsngrobg.smphook.annotations.NonNull;
 
 /**
  * <h1>Discord Webhook</h1>

@@ -1,5 +1,8 @@
 package arsngrobg.smphook;
 
+import arsngrobg.smphook.annotations.UtilityClass;
+import arsngrobg.smphook.discord.DiscordWebhook;
+
 @UtilityClass
 public final class SMPHook {
     public static void main(String[] args) {
