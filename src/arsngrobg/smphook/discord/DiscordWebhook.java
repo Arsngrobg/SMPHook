@@ -7,6 +7,7 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
+
 import java.util.Objects;
 
 import arsngrobg.smphook.annotations.NonNull;
@@ -125,10 +126,10 @@ public final class DiscordWebhook {
 
     @Override
     public boolean equals(Object obj) {
-        if (obj == this) return true;
         if (obj == null || obj.getClass() != getClass()) return false;
+        if (obj == this) return true;
         DiscordWebhook asDiscordWebhook = (DiscordWebhook) obj;
-        return getToken().equals(asDiscordWebhook.getToken()) && getId() == asDiscordWebhook.getId();
+        return getToken().equals(asDiscordWebhook.getToken()) && getId().equals(asDiscordWebhook.getId());
     }
 
     @Override

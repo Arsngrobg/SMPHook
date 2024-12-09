@@ -1,14 +1,14 @@
 package arsngrobg.smphook;
 
 import arsngrobg.smphook.annotations.UtilityClass;
-import arsngrobg.smphook.discord.DiscordWebhook;
+import arsngrobg.smphook.server.HeapArg;
 
 @UtilityClass
 public final class SMPHook {
     public static void main(String[] args) {
-        //1311443813700472933
-        //QRUy-kzfo9KDGSDluueugBxjILRWX2Kr1OG-oubnyOpRk_AOzksD756hM3wK7POuGWye
-        DiscordWebhook webhook = new DiscordWebhook("1311443813700472933", "QRUy-kzfo9KDGSDluueugBxjILRWX2Kr1OG-oubnyOpRk_AOzksD756hM3wK7POuGWye");
-        webhook.post("{\"content\": \"Hi\"}");
+        HeapArg arg1 = new HeapArg(20_000);
+        HeapArg arg2 = new HeapArg(20, HeapArg.Unit.KILOBYTE);
+        System.out.println(HeapArg.asMaxJVM(arg2));
+        System.out.println(arg1.compareTo(arg2));
     }
 }
