@@ -63,7 +63,9 @@ public final class Server {
     public boolean rawInput(String command) {
         command = command.replaceAll("[\n]+", "");
 
-        if (command == null || command.isEmpty() || command.length() >= MAX_COMMAND_LENGTH) return false;
+        if (command == null || command.isEmpty() || command.length() >= MAX_COMMAND_LENGTH) {
+            return false;
+        }
 
         try {
             istream.write(command);
