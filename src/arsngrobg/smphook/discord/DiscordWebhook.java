@@ -7,7 +7,6 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
-
 import java.util.Objects;
 
 import arsngrobg.smphook.annotations.NonNull;
@@ -23,6 +22,8 @@ import arsngrobg.smphook.annotations.NonNull;
  *     boolean success = webhook.post(payload); // sends "Hello, World!" to the assigned channel on Discord
  *     System.out.println(success);             // outputs if that POST request was a success
  * </pre></blockqoute></p>
+ * 
+ * <p>This class is immutable and thread-safe.</p>
  * 
  * @since  1.0
  * @author Arnsgrobg

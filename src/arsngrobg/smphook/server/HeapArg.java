@@ -18,7 +18,7 @@ import arsngrobg.smphook.annotations.NonNull;
  * System.out.println(arg1.compareTo(arg2)); // output: 0
  * </pre></blockqoute>
  * 
- * <p>This object is immutable and thread-safe.</p>
+ * <p>This class is immutable and thread-safe.</p>
  * 
  * @since  1.0
  * @author Arsngrobg

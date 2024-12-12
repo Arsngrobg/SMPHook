@@ -57,6 +57,12 @@ public final class Server {
             process = processBuilder.start();
             istream = new BufferedWriter(new OutputStreamWriter(process.getOutputStream()));
             ostream = new BufferedReader(new InputStreamReader(process.getInputStream()));
+
+            process.onExit().thenAccept(p -> {
+                process = null;
+                istream = null;
+                ostream = null;
+            });
         } catch (IOException e) { e.printStackTrace(); }
     }
 
@@ -111,5 +117,10 @@ public final class Server {
     public HeapArg getMaxHeap() {
         if (!maxHeap.isPresent()) return null;
         return maxHeap.get();
+    }
+
+    @Override
+    public int hashCode() {
+        return process.hashCode();
     }
 }
