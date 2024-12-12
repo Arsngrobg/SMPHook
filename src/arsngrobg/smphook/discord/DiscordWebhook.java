@@ -30,10 +30,11 @@ import arsngrobg.smphook.annotations.Signed;
  * @author Arnsgrobg
  */
 public final class DiscordWebhook {
-    private static final String REQUEST_METHOD = "POST";
-    private static final String   CONTENT_TYPE = "application/json";
+    private static final    int HTTP_TOO_MANY_REQUESTS = 429;
+    private static final String         REQUEST_METHOD = "POST";
+    private static final String           CONTENT_TYPE = "application/json";
 
-    private static final String          REGEX = "^https://discord.com/api/webhooks/\\d{19}/[a-zA-Z0-9_-]{68}$";
+    private static final String                  REGEX = "^https://discord.com/api/webhooks/\\d{19}/[a-zA-Z0-9_-]{68}$";
 
     private final String url;
 
@@ -108,7 +109,7 @@ public final class DiscordWebhook {
             }
 
             int response = connection.getResponseCode();
-            if (response == 429) {
+            if (response == HTTP_TOO_MANY_REQUESTS) {
                 String retryAfterField = connection.getHeaderField("Retry-After");
                 long newDelay = Long.parseLong(retryAfterField);
                 return post(payload, newDelay);
