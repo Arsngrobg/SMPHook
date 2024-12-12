@@ -83,9 +83,12 @@ public final class Server {
     }
 
     public String getInitCommand() {
-        HeapArg minHeapObj = minHeap.isPresent() ? minHeap.get() : null;
-        HeapArg maxHeapObj = maxHeap.isPresent() ? maxHeap.get() : null;
-        return String.format(INIT_CMD_TEMPLATE, HeapArg.asMaxJVM(maxHeapObj), HeapArg.asMinJVM(minHeapObj), jarfile.getName());
+        return String.format(
+            INIT_CMD_TEMPLATE,
+            maxHeap.isPresent() ? maxHeap.get().asMaxOption() : "",
+            minHeap.isPresent() ? minHeap.get().asMinOption() : "",
+            jarfile.getName()
+        );
     }
 
     public boolean isRunning() throws Error {

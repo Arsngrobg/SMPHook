@@ -1,6 +1,8 @@
 package arsngrobg.smphook.server;
 
+import java.util.Arrays;
 import java.util.Objects;
+import java.util.Optional;
 
 import arsngrobg.smphook.annotations.NonNull;
 
@@ -20,6 +22,26 @@ import arsngrobg.smphook.annotations.NonNull;
  * @author Arsngrobg
  */
 public final class HeapArg implements Comparable<HeapArg> {
+    public static HeapArg fromString(@NonNull String argStr) throws Error {
+        if (argStr == null)   throw new Error("SMPHookError: argStr cannot be null.");
+        if (argStr.isEmpty()) throw new Error("SMPHookError: argStr cannot be an empty string.");
+
+        boolean isFullyNumeric = argStr.matches("^\\d(\\d)*$");
+
+        if (isFullyNumeric) {
+            long size = Long.parseLong(argStr);
+            HeapArg asHeapArg = new HeapArg(size);
+            return asHeapArg;
+        } else {
+            long size = Long.parseLong(argStr.substring(0, argStr.length() - 1));
+            Optional<Unit> unit = Arrays.asList(Unit.values()).stream().filter(u -> u.suffix == argStr.charAt(argStr.length() - 1)).findFirst();
+            if (unit.isPresent()) {
+                HeapArg asHeapArg = new HeapArg(size, unit.get());
+                return asHeapArg;
+            } else throw new Error("SMPHookError: invalid heap argument memory");
+        }
+    }
+
     /**
      * Compares the two heap arguments: {@code arg1} & {@code arg2} and returns the relative difference between the two arguments.
      * @param arg1 - the first argument to compare to the second argument
@@ -31,28 +53,6 @@ public final class HeapArg implements Comparable<HeapArg> {
         long s1 = arg1.size * (long) Math.pow(1000, Math.max(0,  difference));
         long s2 = arg2.size * (long) Math.pow(1000, Math.max(0, -difference));
         return Long.compare(s1, s2);
-    }
-
-    /**
-     * <p>Formats the given {@code arg} as a minimum bound argument for the JVM.</p>
-     * <p>Example: {@code HeapArg(2, Unit.GIGABYTE)} gets formatted to {@code "-Xms2G"}</p>
-     * @param arg - a nullable {@code HeapArg}
-     * @return the formatted heap argument, or an empty string ({@code ""}) if {@code arg} is {@code null}
-     */
-    public static String asMinJVM(HeapArg arg) {
-        if (arg == null) return "";
-        return String.format("-Xms%s", arg);
-    }
-
-    /**
-     * <p>Formats the given {@code arg} as a maxmimum bound argument for the JVM.</p>
-     * <p>Example: {@code HeapArg(2, Unit.GIGABYTE)} gets formatted to {@code "-Xmx2G"}</p>
-     * @param arg - a nullable {@code HeapArg}
-     * @return the formatted heap argument, or an empty string ({@code ""}) if {@code arg} is {@code null}
-     */
-    public static String asMaxJVM(HeapArg arg) {
-        if (arg == null) return "";
-        return String.format("-Xmx%s", arg);
     }
 
     /**
@@ -110,6 +110,24 @@ public final class HeapArg implements Comparable<HeapArg> {
      */
     public HeapArg(long size) throws Error {
         this(size, Unit.BYTE);
+    }
+
+    /**
+     * <p>Formats the given {@code arg} as a maximum bound argument for the JVM.</p>
+     * <p>Example: {@code HeapArg(2, Unit.GIGABYTE)} gets formatted to {@code "-Xms2G"}</p>
+     * @return the {@link String} representation of this heap argument, formatted as a maximum heap bound
+     */
+    public String asMaxOption() {
+        return String.format("-Xmx%s", this);
+    }
+
+    /**
+     * <p>Formats the given {@code arg} as a minimum bound argument for the JVM.</p>
+     * <p>Example: {@code HeapArg(2, Unit.GIGABYTE)} gets formatted to {@code "-Xms2G"}</p>
+     * @return the {@link String} representation of this heap argument, formatted as a minimum heap bound
+     */
+    public String asMinOption() {
+        return String.format("-Xms%s", this);
     }
 
     /** @return the memory size, relative to this instance's {@code unit} */
