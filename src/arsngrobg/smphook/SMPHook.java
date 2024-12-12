@@ -10,22 +10,20 @@ import arsngrobg.smphook.server.Server;
 @UtilityClass
 public final class SMPHook {
     public static void main(String[] args) {
-        System.out.println(HeapArg.fromString("2000J"));
-        // HeapArg arg1  = new HeapArg(3, HeapArg.Unit.GIGABYTE);
-        // HeapArg arg2  = new HeapArg(8, HeapArg.Unit.GIGABYTE);
-        // Server server = new Server(new File("smp\\server.jar"), arg1, arg2);
+        HeapArg arg1  = new HeapArg(3, HeapArg.Unit.GIGABYTE);
+        HeapArg arg2  = new HeapArg(8, HeapArg.Unit.GIGABYTE);
+        Server server = new Server(new File("smp\\server.jar"), arg1, arg2);
 
-        // server.init(false);
+        server.init(false);
 
-        // try (Scanner scanner = new Scanner(System.in)) {
-        //     while (server.isRunning()) {
-        //         System.out.print(">>> ");
-        //         String command = scanner.nextLine();
-        //         boolean success = server.rawInput(command);
-        //         if (command.equals("stop") && success) break;
-        //         System.out.println();
-        //     }
-        // }
+        try (Scanner scanner = new Scanner(System.in)) {
+            while (server.isRunning()) {
+                System.out.print("[JSMP] >>> ");
+                String command = scanner.nextLine();
+                boolean success = server.rawInput(command);
+                if (command.equals("stop") && success) break;
+            }
+        }
 
         // String line;
         // while ((line = server.rawOutput()) != null) {

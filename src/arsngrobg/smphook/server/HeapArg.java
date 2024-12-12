@@ -18,10 +18,19 @@ import arsngrobg.smphook.annotations.NonNull;
  * System.out.println(arg1.compareTo(arg2)); // output: 0
  * </pre></blockqoute>
  * 
+ * <p>This object is immutable and thread-safe.</p>
+ * 
  * @since  1.0
  * @author Arsngrobg
  */
 public final class HeapArg implements Comparable<HeapArg> {
+    /**
+     * <p>Parses the given {@code argStr} and attempts to parse it.</p>
+     * <p>The {@code argStr} parameter must be a strictly numeric value or a numeric value paired with one of the unit suffixes found in {@link Unit}.</p>
+     * @param argStr - a non-null {@link String} that must match the heap arg pattern
+     * @return a valid {@link HeapArg} object that represents the original {@code argStr} parameter
+     * @throws Error if {@code argStr} is: {@code null}, empty, the pattern is invalid
+     */
     public static HeapArg fromString(@NonNull String argStr) throws Error {
         if (argStr == null)   throw new Error("SMPHookError: argStr cannot be null.");
         if (argStr.isEmpty()) throw new Error("SMPHookError: argStr cannot be an empty string.");
@@ -43,7 +52,7 @@ public final class HeapArg implements Comparable<HeapArg> {
     }
 
     /**
-     * Compares the two heap arguments: {@code arg1} & {@code arg2} and returns the relative difference between the two arguments.
+     * <p>Compares the two heap arguments: {@code arg1} & {@code arg2} and returns the relative difference between the two arguments.</p>
      * @param arg1 - the first argument to compare to the second argument
      * @param arg2 - the second argument to compare to the first argument
      * @return the relative difference between {@code arg1} & {@code arg2}
