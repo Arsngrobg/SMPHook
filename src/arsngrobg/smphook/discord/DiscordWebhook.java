@@ -10,6 +10,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.Objects;
 
 import arsngrobg.smphook.annotations.NonNull;
+import arsngrobg.smphook.annotations.Signed;
 
 /**
  * <h1>Discord Webhook</h1>
@@ -29,10 +30,11 @@ import arsngrobg.smphook.annotations.NonNull;
  * @author Arnsgrobg
  */
 public final class DiscordWebhook {
-    private static final String REQUEST_METHOD = "POST";
-    private static final String CONTENT_TYPE   = "application/json";
+    private static final    int HTTP_TOO_MANY_REQUESTS = 429;
+    private static final String         REQUEST_METHOD = "POST";
+    private static final String           CONTENT_TYPE = "application/json";
 
-    private static final String REGEX = "^https://discord.com/api/webhooks/\\d{19}/[a-zA-Z0-9_-]{68}$";
+    private static final String                  REGEX = "^https://discord.com/api/webhooks/\\d{19}/[a-zA-Z0-9_-]{68}$";
 
     private final String url;
 
@@ -51,20 +53,20 @@ public final class DiscordWebhook {
 
     /**
      * <p>Initialises a DiscordWebhook instance using the {@code id} & {@code token} to generate the URL string.</p>
-     * @param id - numeric value relating to the unique ID of the webhook (as string)
+     * @param    id - numeric value relating to the unique ID of the webhook (as string)
      * @param token - unique string value for authentication with Discord - should not be {@code null}
      * @throws Error if the Discord webhook URL generated from this constructor is invalid
      */
     public DiscordWebhook(@NonNull String id, @NonNull String token) throws Error {
         this(String.format("https://discord.com/api/webhooks/%s/%s", id, token));
     }
-
     /**
+     * <i>This is the delayed version of {@link #post(String)} - essentially pausing before sending the data (helps get around rate-limiting).</i>
      * <p>Attempts to initiate a HTTPS connection with Discord's webhook service using the webhook URL bound by this DiscordWebhook instance.</p>
      * <p>This method returns {@code false} if:
      *     <ul>
      *         <li>a HTTPS connection could not be established</li>
-     *         <li>if the service is unable to send the {@code payload}</li>
+     *         <li>if the service is unable to send the {@code payload} - this can be from <a href="https://discord.com/developers/docs/topics/rate-limits">rate-limiting</a></li>
      *         <li>if the HTTPS connection has returned any content (typically means error)</li>
      *         <li>if the {@code payload} is {@code null}</li>
      *     </ul>
@@ -80,14 +82,20 @@ public final class DiscordWebhook {
      *     else         System.out.println("Payload Failure!");
      * </pre></blockquote></p>
      * 
-     * <b>Discord webhook API documentation: https://birdie0.github.io/discord-webhooks-guide</b>
+     * <p><b>Discord webhook API guide: https://birdie0.github.io/discord-webhooks-guide</b></p>
+
+     * <p><b>A {@code delay} of {@code 0} results in the webhook using the rate-limit data to send the message when rate-limit is removed.</b></p>
      * @param payload - a non-null JSON string containing the necessary data
+     * @param delay   - number of milliseconds to wait before sending the message
      * @return {@code true} if the payload was sent successfully, {@code false} if otherwise
      */
-    public boolean post(@NonNull String payload) {
-        if (payload == null) return false;
+    public boolean post(@NonNull String payload, @Signed long delay) {
+        if (payload == null || delay < 0) return false;
 
         try {
+            try { Thread.sleep(delay); }
+            catch (InterruptedException e) { e.printStackTrace(); }
+
             URL httpURL = new URI(url).toURL();
             HttpURLConnection connection = (HttpURLConnection) httpURL.openConnection();
 
@@ -101,8 +109,25 @@ public final class DiscordWebhook {
             }
 
             int response = connection.getResponseCode();
+            if (response == HTTP_TOO_MANY_REQUESTS) {
+                String retryAfterField = connection.getHeaderField("Retry-After");
+                long newDelay = Long.parseLong(retryAfterField);
+                return post(payload, newDelay);
+            }
+
             return response == HttpURLConnection.HTTP_NO_CONTENT;
-        } catch (IOException | URISyntaxException ignored) { return false; }
+        } catch (IOException | URISyntaxException ignored) { return false; } // URISyntaxException shouldn't happen
+    }
+
+
+    /**
+     * <p>See: {@link #post(String, long)}</p>
+     * <p>This is equivalent to invoking the {@link #post(String, long)} method with {@code 0} as the {@code delay} argument.</p>
+     * @param payload - a non-null JSON string containing the necessary data
+     * @return {@code true} if the payload was sent successfully, {@code false} if otherwise
+     */
+    public boolean post(@NonNull String payload) {
+        return post(payload, 0);
     }
 
     /** @return the Discord webhook URL that this DiscordWebhook instance is bound by */
@@ -135,6 +160,6 @@ public final class DiscordWebhook {
 
     @Override
     public String toString() {
-        return String.format("DiscordWebhook[ID: %d, Token: %s]", getId(), getToken());
+        return String.format("DiscordWebhook[ID: %s, Token: %s]", getId(), getToken());
     }
 }
