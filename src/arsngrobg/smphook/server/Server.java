@@ -19,9 +19,9 @@ public final class Server {
     private final Optional<HeapArg> minHeap;
     private final Optional<HeapArg> maxHeap;
 
-    private Process process;
+    private Process        process;
     private BufferedWriter istream;
-    private BufferedReader  ostream;
+    private BufferedReader ostream;
 
     public Server(@NonNull File jarfile, HeapArg minHeap, HeapArg maxHeap) throws Error {
         if (jarfile == null) {
@@ -30,6 +30,10 @@ public final class Server {
 
         if (!jarfile.getName().endsWith(FILE_EXTENSION)) {
             throw new Error("SMPHookError: jarfile must be a valid .jar file");
+        }
+
+        if ((minHeap != null && maxHeap != null) && minHeap.compareTo(maxHeap) == 1) {
+            throw new Error("SMPHookError: mismatched minimum and maximum heap bounds.");
         }
 
         this.jarfile = jarfile;
@@ -64,6 +68,13 @@ public final class Server {
                 ostream = null;
             });
         } catch (IOException e) { e.printStackTrace(); }
+    }
+
+    public void stop() {
+        boolean safeStop = rawInput("stop");
+        if (!safeStop) {
+            process.destroy();
+        }
     }
 
     public boolean rawInput(String command) {
@@ -121,6 +132,19 @@ public final class Server {
 
     @Override
     public int hashCode() {
-        return process.hashCode();
+        return (int) process.pid();
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (obj == null || obj.getClass() != getClass()) return false;
+        if (obj == this) return true;
+        Server asServer = (Server) obj;
+        return hashCode() == asServer.hashCode();
+    }
+
+    @Override
+    public String toString() {
+        return String.format("Server[%d]", process.pid());
     }
 }
