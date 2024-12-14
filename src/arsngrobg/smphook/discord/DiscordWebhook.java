@@ -60,6 +60,7 @@ public final class DiscordWebhook {
     public DiscordWebhook(@NonNull String id, @NonNull String token) throws Error {
         this(String.format("https://discord.com/api/webhooks/%s/%s", id, token));
     }
+
     /**
      * <i>This is the delayed version of {@link #post(String)} - essentially pausing before sending the data (helps get around rate-limiting).</i>
      * <p>Attempts to initiate a HTTPS connection with Discord's webhook service using the webhook URL bound by this DiscordWebhook instance.</p>
@@ -83,19 +84,51 @@ public final class DiscordWebhook {
      * </pre></blockquote></p>
      * 
      * <p><b>Discord webhook API guide: https://birdie0.github.io/discord-webhooks-guide</b></p>
-
-     * <p><b>A {@code delay} of {@code 0} results in the webhook using the rate-limit data to send the message when rate-limit is removed.</b></p>
      * @param payload - a non-null JSON string containing the necessary data
-     * @param delay   - number of milliseconds to wait before sending the message
+     * @param delay   - the number of milliseconds the webhook will wait before sending the message
      * @return {@code true} if the payload was sent successfully, {@code false} if otherwise
      */
     public boolean post(@NonNull String payload, @Signed long delay) {
-        if (payload == null || delay < 0) return false;
+        if (delay < 0) return false;
+
+        try { Thread.sleep(delay); }
+        catch (InterruptedException e) { e.printStackTrace(); }
+
+        return post(payload);
+    }
+
+    /**
+     * <p>Attempts to initiate a HTTPS connection with Discord's webhook service using the webhook URL bound by this DiscordWebhook instance.</p>
+     * <p>This method returns {@code false} if:
+     *     <ul>
+     *         <li>a HTTPS connection could not be established</li>
+     *         <li>if the service is unable to send the {@code payload} - this can be from <a href="https://discord.com/developers/docs/topics/rate-limits">rate-limiting</a></li>
+     *         <li>if the HTTPS connection has returned any content (typically means error)</li>
+     *         <li>if the {@code payload} is {@code null}</li>
+     *     </ul>
+     * </p>
+     * 
+     * <p>It is important that before sending the payload, make sure that literal strings within the JSON should be escaped.
+     * 
+     * <blockqoute><pre>
+     *     DiscordWebhook webhook = new DiscordWebhook("YOUR_URL_HERE");
+     *     final String payload = "{\"content\": \"Hello, World!\", \"username\": \"foo\"}";
+     *     boolean success = webhook.post(payload);
+     *     if (success) System.out.println("Payload Success!");
+     *     else         System.out.println("Payload Failure!");
+     * </pre></blockquote></p>
+     * 
+     * <p><b>Discord webhook API guide: https://birdie0.github.io/discord-webhooks-guide</b></p>
+     * @param payload - a non-null JSON string containing the necessary data
+     * @return {@code true} if the payload was sent successfully, {@code false} if otherwise
+     */
+    public boolean post(@NonNull String payload) {
+        if (payload == null) return false;
+
+        payload = payload.replaceAll("[\\s|\\n]+", "");
+        if (payload.isEmpty()) return false;
 
         try {
-            try { Thread.sleep(delay); }
-            catch (InterruptedException e) { e.printStackTrace(); }
-
             URL httpURL = new URI(url).toURL();
             HttpURLConnection connection = (HttpURLConnection) httpURL.openConnection();
 
@@ -117,17 +150,6 @@ public final class DiscordWebhook {
 
             return response == HttpURLConnection.HTTP_NO_CONTENT;
         } catch (IOException | URISyntaxException ignored) { return false; } // URISyntaxException shouldn't happen
-    }
-
-
-    /**
-     * <p>See: {@link #post(String, long)}</p>
-     * <p>This is equivalent to invoking the {@link #post(String, long)} method with {@code 0} as the {@code delay} argument.</p>
-     * @param payload - a non-null JSON string containing the necessary data
-     * @return {@code true} if the payload was sent successfully, {@code false} if otherwise
-     */
-    public boolean post(@NonNull String payload) {
-        return post(payload, 0);
     }
 
     /** @return the Discord webhook URL that this DiscordWebhook instance is bound by */
