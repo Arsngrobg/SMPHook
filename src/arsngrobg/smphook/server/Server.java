@@ -3,10 +3,12 @@ package arsngrobg.smphook.server;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.util.Optional;
+import java.util.Properties;
 
 import arsngrobg.smphook.annotations.NonNull;
 
@@ -36,6 +38,21 @@ public final class Server {
             throw new Error("SMPHookError: mismatched minimum and maximum heap bounds.");
         }
 
+        File directory = jarfile.getParentFile();
+        File eulaFile = new File(String.format("%s%seula.txt", directory == null ? "" : directory, File.separator));
+        
+        Properties eulaProperties = new Properties();
+        try (FileInputStream fistream = new FileInputStream(eulaFile)) {
+            eulaProperties.load(fistream);
+        } catch (IOException e) {
+            throw (Error) new Error("SMPHookError: Unable to locate the eula.txt file. Run the server once to produce defualt eula.txt file.").initCause(e);
+        }
+
+        String value = eulaProperties.getProperty("eula");
+        if (value == null || !value.equals("true")) {
+            throw new Error("SMPHookError: You have not agreed to the official Minecraft EULA, you must agree before continuing.");
+        }
+        
         this.jarfile = jarfile;
         this.minHeap = Optional.ofNullable(minHeap);
         this.maxHeap = Optional.ofNullable(maxHeap);
@@ -45,15 +62,15 @@ public final class Server {
         if (isRunning()) return;
 
         String command = getInitCommand();
-        if (nogui) command.concat(" nogui");
+        if (nogui) command = command.concat(" nogui");
         String[] commandTokens = command.split("\\s+");
 
         ProcessBuilder processBuilder = new ProcessBuilder(commandTokens);
 
-        String absPath = jarfile.getAbsolutePath();
-        String jarName = jarfile.getName();
-        String dirPath = absPath.substring(0, absPath.length() - jarName.length() - 1);
-        processBuilder.directory(new File(dirPath));
+        File directory = jarfile.getParentFile();
+        if (directory != null) {
+            processBuilder.directory(directory);
+        }
         
         processBuilder.redirectErrorStream(true);
 
@@ -78,6 +95,8 @@ public final class Server {
     }
 
     public boolean rawInput(String command) {
+        if (!isRunning()) return false;
+
         command = command.replaceAll("[\n]+", "");
 
         if (command == null || command.isEmpty() || command.length() >= MAX_COMMAND_LENGTH) {
@@ -93,6 +112,8 @@ public final class Server {
     }
 
     public String rawOutput() {
+        if (!isRunning()) return null;
+
         try {
             String line = ostream.readLine();
             return line;
@@ -105,7 +126,7 @@ public final class Server {
             maxHeap.isPresent() ? maxHeap.get().asMaxOption() : "",
             minHeap.isPresent() ? minHeap.get().asMinOption() : "",
             jarfile.getName()
-        );
+        ).replaceAll("\\s+", " ");
     }
 
     public boolean isRunning() throws Error {

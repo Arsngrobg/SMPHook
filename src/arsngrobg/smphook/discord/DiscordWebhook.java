@@ -119,6 +119,8 @@ public final class DiscordWebhook {
      * </pre></blockquote></p>
      * 
      * <p><b>Discord webhook API guide: https://birdie0.github.io/discord-webhooks-guide</b></p>
+     * 
+     * <p><b>This method naturally handles rate-limiting.</b></p>
      * @param payload - a non-null JSON string containing the necessary data
      * @return {@code true} if the payload was sent successfully, {@code false} if otherwise
      */
@@ -136,9 +138,9 @@ public final class DiscordWebhook {
             connection.setRequestProperty("Content-Type", CONTENT_TYPE);
             connection.setDoOutput(true);
 
-            try (OutputStream os = connection.getOutputStream()) {
+            try (OutputStream ostream = connection.getOutputStream()) {
                 byte[] bytes = payload.getBytes(StandardCharsets.UTF_8);
-                os.write(bytes);
+                ostream.write(bytes);
             }
 
             int response = connection.getResponseCode();
