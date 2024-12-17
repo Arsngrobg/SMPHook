@@ -33,11 +33,25 @@ public final class Server {
         if (!jarfile.getName().endsWith(FILE_EXTENSION)) {
             throw new Error("SMPHookError: jarfile must be a valid .jar file");
         }
+        
+        this.jarfile = jarfile;
+        this.minHeap = Optional.ofNullable(minHeap);
+        this.maxHeap = Optional.ofNullable(maxHeap);
 
-        if ((minHeap != null && maxHeap != null) && minHeap.compareTo(maxHeap) == 1) {
-            throw new Error("SMPHookError: mismatched minimum and maximum heap bounds.");
+        this.minHeap.ifPresent(minArg -> {
+            this.maxHeap.ifPresent(maxArg -> {
+                if (minArg.compareTo(maxArg) == 1) {
+                    throw new Error("SMPHookError: mismatched minimum and maximum heap bounds.");
+                }
+            });
+        });
+
+        if (!hasAgreedToEULA()) {
+            throw new Error("SMPHookError: You have not agreed to the official Minecraft EULA, please agree before continuing.");
         }
+    }
 
+    public boolean hasAgreedToEULA() {
         File directory = jarfile.getParentFile();
         File eulaFile = new File(String.format("%s%seula.txt", directory == null ? "" : directory, File.separator));
         
@@ -49,13 +63,7 @@ public final class Server {
         }
 
         String value = eulaProperties.getProperty("eula");
-        if (value == null || !value.equals("true")) {
-            throw new Error("SMPHookError: You have not agreed to the official Minecraft EULA, you must agree before continuing.");
-        }
-        
-        this.jarfile = jarfile;
-        this.minHeap = Optional.ofNullable(minHeap);
-        this.maxHeap = Optional.ofNullable(maxHeap);
+        return value != null && value.equals("true");
     }
 
     public void init(boolean nogui) {
@@ -99,7 +107,7 @@ public final class Server {
 
         command = command.replaceAll("[\n]+", "");
 
-        if (command == null || command.isEmpty() || command.length() >= MAX_COMMAND_LENGTH) {
+        if (command == null || command.length() >= MAX_COMMAND_LENGTH) {
             return false;
         }
 

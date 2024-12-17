@@ -8,7 +8,7 @@ import java.lang.annotation.Target;
 /**
  * <h1>Utility Class</h1>
  * <p>Declares that the class annotated with this annotation is referred to as a utility class.
- *    This means that it does not require an instance of this class in order to use it.
+ *    This means that it does not require an instance of this class in order to use it, and any instances are non-beneficial.
  * </p>
  * 
  * @since  1.0
