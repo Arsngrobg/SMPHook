@@ -25,16 +25,16 @@ public final class Server {
     private BufferedWriter istream;
     private BufferedReader ostream;
 
-    public Server(@NonNull File jarfile, HeapArg minHeap, HeapArg maxHeap) throws Error {
+    public Server(@NonNull String jarfile, HeapArg minHeap, HeapArg maxHeap) throws Error {
         if (jarfile == null) {
             throw new Error("SMPHookError: jarfile cannot be null.");
         }
 
-        if (!jarfile.getName().endsWith(FILE_EXTENSION)) {
+        if (!jarfile.endsWith(FILE_EXTENSION)) {
             throw new Error("SMPHookError: jarfile must be a valid .jar file");
         }
         
-        this.jarfile = jarfile;
+        this.jarfile = new File(jarfile);
         this.minHeap = Optional.ofNullable(minHeap);
         this.maxHeap = Optional.ofNullable(maxHeap);
 
