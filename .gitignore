@@ -1,5 +1,6 @@
 # Config File
 hook.config
+hook.conf
 
 # Project Folders
 /.idea
