@@ -86,7 +86,7 @@ public final class Config {
 
     private final Map<String, ConfigValue<?>[]> values = new HashMap<>();
 
-    public Config(Map<String, ConfigValue<?>[]> values) {
+    private Config(Map<String, ConfigValue<?>[]> values) {
         if (values == null) {
             throw new Error("SMPHookError: config value map cannot be null.");
         }
@@ -197,7 +197,9 @@ public final class Config {
                 stringBuilder.append(val).append("\n");                
             }
 
-            stringBuilder.append("\n");
+            if (sec == null && vals.length != 0) {
+                stringBuilder.append("\n");
+            }
         });
 
         stringBuilder.setLength(stringBuilder.length() - 1);

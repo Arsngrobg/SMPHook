@@ -1,5 +1,6 @@
 package arsngrobg.smphook;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.NoSuchElementException;
@@ -75,7 +76,7 @@ public final class SMPHook {
         }
     }
 
-    public static void main(String[] args) {
+    public static void start() {
         Config config = Config.fromFile("hook.conf");
 
         String  entryPoint = config.getString("Server.entry_point");
@@ -84,5 +85,29 @@ public final class SMPHook {
 
         Server server = new Server(entryPoint, minHeap, maxHeap);
         hookTo(server);
+    }
+
+    public static void setup() {
+        final String defaultConfig = String.format("""
+        [Server]
+        entry_point = smp%sserver.jar
+        min_heap    =
+        max_heap    =
+
+        [Discord]
+        webhook_url = YOUR_URL_HER
+        webhook_use = true
+        """, File.separator);
+        
+        System.out.println("Generating defualt config file: hook.conf");
+        Config config = Config.fromSource(defaultConfig);
+        boolean success = config.export("hook.conf");
+        System.out.println(success ? "Successfully exported default config file." : "Failed to export default config file.");
+    }
+
+    public static void main(String[] args) {
+             if (args.length == 0)                                     start();
+        else if (args.length == 1 && args[0].equals("setup")) setup();
+        else throw new Error("SMPHookError: invalid executable arguments.");
     }
 }

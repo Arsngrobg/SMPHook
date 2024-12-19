@@ -30,6 +30,7 @@ public final class ConfigValue<T> {
     }
 
     public boolean isType(Class<?> type) {
+        if (value == null) return true;
         return value.getClass() == type;
     }
 
@@ -48,7 +49,8 @@ public final class ConfigValue<T> {
 
     @Override
     public String toString() {
-        return String.format("%s = %s", name, value);
+        if (value == null) return String.format("%s = ", name);
+        else               return String.format("%s = %s", name, value);
     }
 
     @Override
