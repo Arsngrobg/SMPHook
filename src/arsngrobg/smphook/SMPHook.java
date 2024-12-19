@@ -35,7 +35,7 @@ public final class SMPHook {
         if (task == null) return;
 
         String workerID = String.format("Worker#%d", workers.size() + 1);
-        Thread thread = new Thread(task, workerID);
+        Thread thread = Thread.ofVirtual().name(workerID).unstarted(task);
         thread.setDaemon(true);
         thread.start();
 
