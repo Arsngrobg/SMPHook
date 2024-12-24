@@ -45,25 +45,6 @@ public final class Server {
                 }
             });
         });
-
-        if (!hasAgreedToEULA()) {
-            throw new Error("SMPHookError: You have not agreed to the official Minecraft EULA, please agree before continuing.");
-        }
-    }
-
-    public boolean hasAgreedToEULA() {
-        File directory = jarfile.getParentFile();
-        File eulaFile = new File(String.format("%s%seula.txt", directory == null ? "" : directory, File.separator));
-        
-        Properties eulaProperties = new Properties();
-        try (FileInputStream fistream = new FileInputStream(eulaFile)) {
-            eulaProperties.load(fistream);
-        } catch (IOException e) {
-            throw (Error) new Error("SMPHookError: Unable to locate the eula.txt file. Run the server once to produce defualt eula.txt file.").initCause(e);
-        }
-
-        String value = eulaProperties.getProperty("eula");
-        return value != null && value.equals("true");
     }
 
     public void init(boolean nogui) {
@@ -150,13 +131,11 @@ public final class Server {
     }
 
     public HeapArg getMinHeap() {
-        if (!minHeap.isPresent()) return null;
-        return minHeap.get();
+        return minHeap.orElseGet(() -> null);
     }
 
     public HeapArg getMaxHeap() {
-        if (!maxHeap.isPresent()) return null;
-        return maxHeap.get();
+        return maxHeap.orElseGet(() -> null);
     }
 
     @Override

@@ -1,6 +1,5 @@
-# Config File
-hook.config
-hook.conf
+# Config files
+hook.properties
 
 # Project Folders
 /.idea

@@ -1,6 +1,5 @@
 package arsngrobg.smphook;
 
-import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.NoSuchElementException;
@@ -8,7 +7,6 @@ import java.util.Scanner;
 
 import arsngrobg.smphook.annotations.NonNull;
 import arsngrobg.smphook.annotations.UtilityClass;
-import arsngrobg.smphook.config.Config;
 import arsngrobg.smphook.server.HeapArg;
 import arsngrobg.smphook.server.Server;
 
@@ -74,40 +72,24 @@ public final class SMPHook {
             System.out.printf("====SMP Hook v%d.%d=====================================================================\n", VERSION_MAJOR, VERSION_MINOR);
             System.out.print(">>> ");
         }
+
+        System.out.print("\033[0m\033[2J\033[H");
     }
 
     public static void start() {
-        Config config = Config.fromFile("hook.conf");
+        String entryPoint = "smp\\server.jar";
 
-        String  entryPoint = config.getString("Server.entry_point");
-        HeapArg minHeap    = HeapArg.fromString(config.getString("Server.min_heap"));
-        HeapArg maxHeap    = HeapArg.fromString(config.getString("Server.max_heap"));
+        HeapArg minHeap = new HeapArg(3,  HeapArg.Unit.GIGABYTE);
+        HeapArg maxHeap = new HeapArg(16, HeapArg.Unit.GIGABYTE);
 
         Server server = new Server(entryPoint, minHeap, maxHeap);
+
         hookTo(server);
     }
 
-    public static void setup() {
-        final String defaultConfig = String.format("""
-        [Server]
-        entry_point = smp%sserver.jar
-        min_heap    =
-        max_heap    =
-
-        [Discord]
-        webhook_url = YOUR_URL_HER
-        webhook_use = true
-        """, File.separator);
-        
-        System.out.println("Generating defualt config file: hook.conf");
-        Config config = Config.fromSource(defaultConfig);
-        boolean success = config.export("hook.conf");
-        System.out.println(success ? "Successfully exported default config file." : "Failed to export default config file.");
-    }
-
     public static void main(String[] args) {
-             if (args.length == 0)                                     start();
-        else if (args.length == 1 && args[0].equals("setup")) setup();
-        else throw new Error("SMPHookError: invalid executable arguments.");
+        start();
     }
+
+    private SMPHook() {}
 }
