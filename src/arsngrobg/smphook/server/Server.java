@@ -3,14 +3,13 @@ package arsngrobg.smphook.server;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.util.Optional;
-import java.util.Properties;
 
 import arsngrobg.smphook.annotations.NonNull;
+import arsngrobg.smphook.annotations.ReturnsValue;
 
 public final class Server {
     private static final    int MAX_COMMAND_LENGTH = 256;
@@ -109,6 +108,7 @@ public final class Server {
         } catch (IOException ignored) { return null; }
     }
 
+    @ReturnsValue
     public String getInitCommand() {
         return String.format(
             INIT_CMD_TEMPLATE,
@@ -126,6 +126,7 @@ public final class Server {
         return running;
     }
 
+    @ReturnsValue
     public File getJarfile() {
         return jarfile;
     }
@@ -152,6 +153,7 @@ public final class Server {
     }
 
     @Override
+    @ReturnsValue
     public String toString() {
         return String.format("Server[%d]", process.pid());
     }

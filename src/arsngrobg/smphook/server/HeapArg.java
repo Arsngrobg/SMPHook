@@ -5,6 +5,7 @@ import java.util.Objects;
 import java.util.Optional;
 
 import arsngrobg.smphook.annotations.NonNull;
+import arsngrobg.smphook.annotations.ReturnsValue;
 
 /**
  * <h1>JVM Heap Argument</h1>
@@ -31,6 +32,7 @@ public final class HeapArg implements Comparable<HeapArg> {
      * @return a valid {@link HeapArg} object that represents the original {@code argStr} parameter
      * @throws Error if {@code argStr} is: {@code null}, empty, the pattern is invalid
      */
+    @ReturnsValue
     public static HeapArg fromString(@NonNull String argStr) throws Error {
         if (argStr == null)   throw new Error("SMPHookError: argStr cannot be null.");
         if (argStr.isEmpty()) throw new Error("SMPHookError: argStr cannot be an empty string.");
@@ -126,6 +128,7 @@ public final class HeapArg implements Comparable<HeapArg> {
      * <p>Example: {@code HeapArg(2, Unit.GIGABYTE)} gets formatted to {@code "-Xms2G"}</p>
      * @return the {@link String} representation of this heap argument, formatted as a maximum heap bound
      */
+    @ReturnsValue
     public String asMaxOption() {
         return String.format("-Xmx%s", this);
     }
@@ -135,6 +138,7 @@ public final class HeapArg implements Comparable<HeapArg> {
      * <p>Example: {@code HeapArg(2, Unit.GIGABYTE)} gets formatted to {@code "-Xms2G"}</p>
      * @return the {@link String} representation of this heap argument, formatted as a minimum heap bound
      */
+    @ReturnsValue
     public String asMinOption() {
         return String.format("-Xms%s", this);
     }
@@ -145,6 +149,7 @@ public final class HeapArg implements Comparable<HeapArg> {
     }
 
     /** @return the enum representing the scale of the {@code size} */
+    @ReturnsValue
     public Unit getUnit() {
         return unit;
     }
@@ -168,6 +173,7 @@ public final class HeapArg implements Comparable<HeapArg> {
     }
 
     @Override
+    @ReturnsValue
     public String toString() {
         return String.format("%d%s", size, unit.suffix);
     }

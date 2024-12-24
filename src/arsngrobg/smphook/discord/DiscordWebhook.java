@@ -10,6 +10,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.Objects;
 
 import arsngrobg.smphook.annotations.NonNull;
+import arsngrobg.smphook.annotations.ReturnsValue;
 import arsngrobg.smphook.annotations.Signed;
 
 /**
@@ -155,16 +156,19 @@ public final class DiscordWebhook {
     }
 
     /** @return the Discord webhook URL that this DiscordWebhook instance is bound by */
+    @ReturnsValue
     public String getUrl() {
         return url;
     }
 
     /** @return the numeric value relating to the unique ID of the webhook (as string) */
+    @ReturnsValue
     public String getId() {
         return url.substring(33, 51);
     }
 
     /** @return the unique string value for the authentication with Discord */
+    @ReturnsValue
     public String getToken() {
         return url.substring(53, url.length() - 1);
     }
@@ -183,6 +187,7 @@ public final class DiscordWebhook {
     }
 
     @Override
+    @ReturnsValue
     public String toString() {
         return String.format("DiscordWebhook[ID: %s, Token: %s]", getId(), getToken());
     }
