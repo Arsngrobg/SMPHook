@@ -176,6 +176,7 @@ public final class ServerProcess {
 
     /** <p>Forcefully terminates the underlying process.</p> */
     public void forceStop() {
+        if (!isRunning()) return;
         process.destroyForcibly();
     }
 
@@ -185,6 +186,7 @@ public final class ServerProcess {
      * </p>
      */
     public void stop() {
+        if (!isRunning()) return;
         boolean safeStop = rawInput("stop");
         if (!safeStop) forceStop();
     }
