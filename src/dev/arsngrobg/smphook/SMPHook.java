@@ -247,6 +247,7 @@ public final class SMPHook {
                         }
                     }
                 } catch (NoSuchElementException ignored) {} // caused by CTRL+C
+                SMPHook.sleep(500);
             };
             SMPHook.assignWorkerTo(procInputTask);
 
@@ -287,7 +288,7 @@ public final class SMPHook {
         return String.format("%d.%d", VERSION_MAJOR, VERSION_MINOR);
     }
 
-    public static void main(String[] args) {
+    public static void main(String[] args) throws Exception {
         // setup
         if (args.length == 1 && args[0].equals("setup")) {
             defaultProperties(true);
@@ -322,6 +323,8 @@ public final class SMPHook {
         System.setOut(customPrintStream);
 
         // main control flow
+        SMPHook.doOnExit(() -> System.out.print("\033[0m\033[2J\033[H"));
+
         System.out.print("\033[48;2;15;15;15m\033[2J\033[H");
         System.out.printf("====SMP Hook v%s=======================================================================\n", getVersion());
 
