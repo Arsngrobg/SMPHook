@@ -17,7 +17,6 @@ import java.util.Scanner;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Function;
 
 import dev.arsngrobg.smphook.core.DiscordWebhook;
@@ -190,6 +189,10 @@ public final class SMPHook {
         outputQueue.offer(consoleOutput);
     }
 
+    /**
+     * <p>Hooks to the given server {@code proc}, and initialises useful functionality.</p>
+     * @param proc - the server process to hook onto
+     */
     public static void hookTo(ServerProcess proc) {
         if (!proc.isRunning()) proc.init(false);
 
@@ -267,7 +270,9 @@ public final class SMPHook {
             String line;
             try { while (!(line = outputQueue.take()).equals(TERMINATION_STRING)) {
                 System.out.print(line);
-                System.out.printf("====SMP Hook v%s=======================================================================\n>>> ", getVersion());
+                if (prettyPrint) {
+                    System.out.printf("====SMP Hook v%s=======================================================================\n>>> ", getVersion());
+                }
             }} catch (InterruptedException ignored) {}
 
         } while (shouldRestart.get());
@@ -300,13 +305,7 @@ public final class SMPHook {
 
         // interrupt and fire all workers on JVM shutdown (mass unemployment)
         SMPHook.doOnExit(() -> {
-            AtomicInteger workerIdx = new AtomicInteger(0);
-            workers.stream().forEach(w -> {
-                workerIdx.incrementAndGet();
-                if (w == null) return;
-                w.interrupt();
-                SMPHook.log("workers", "Worker#%d has been let go.", workerIdx.get());
-            });
+            workers.stream().filter(w -> w != null).forEach(w -> w.interrupt());
             workers.clear();
         });
 
@@ -324,6 +323,7 @@ public final class SMPHook {
 
         // main control flow
         System.out.print("\033[48;2;15;15;15m\033[2J\033[H");
+        System.out.printf("====SMP Hook v%s=======================================================================\n", getVersion());
 
         Properties prop = properties();
         String jarFile = prop.getProperty("jar-file");
