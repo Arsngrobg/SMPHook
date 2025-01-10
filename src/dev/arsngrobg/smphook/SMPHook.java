@@ -14,6 +14,8 @@ import java.util.NoSuchElementException;
 import java.util.Optional;
 import java.util.Properties;
 import java.util.Scanner;
+import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Function;
@@ -42,6 +44,9 @@ public final class SMPHook {
 
     /** <p>The file handle to the log file in the current SMPHook session.</p> */
     public static final File LOG_FILE = new File(String.format("logs%s%d.log", File.separator, System.currentTimeMillis()));
+
+    private static final BlockingQueue<String> outputQueue = new ArrayBlockingQueue<>(10);
+    private static final String TERMINATION_STRING = "TERMINATION";
 
     private static final List<Thread> workers = new ArrayList<>();
 
@@ -182,9 +187,7 @@ public final class SMPHook {
             logOutput.substring(12, 23),
             logOutput.substring(23)
         );
-        System.out.print(consoleOutput);
-
-        System.out.printf("====SMP Hook v%s=======================================================================\n>>> ", getVersion());
+        outputQueue.offer(consoleOutput);
     }
 
     public static void hookTo(ServerProcess proc) {
@@ -244,17 +247,28 @@ public final class SMPHook {
             };
             SMPHook.assignWorkerTo(procInputTask);
 
+            Runnable procOutputTask = () -> {
+                Optional<String> procOutput;
+                while ((procOutput = proc.rawOutput()).isPresent()) {
+                    String sanitized = procOutput.get().replaceAll("%", "%%");
+                    SMPHook.log("server", sanitized);
+                }
+                outputQueue.offer(TERMINATION_STRING); // can't put nulls so this'll have to do
+            };
+            SMPHook.assignWorkerTo(procOutputTask);
+
             Runnable notifyTask = () -> {
                 SMPHook.sleep(15000); // give buffer time as inbetween the init and now it may no actually start the server
                 webhook.post(String.format("{\"content\":\"The server is online. The IP is ```%s```\"}", lastKnownIp.get()));
             };
             SMPHook.assignWorkerTo(notifyTask);
-    
-            Optional<String> procOutput;
-            while ((procOutput = proc.rawOutput()).isPresent()) {
-                String sanitized = procOutput.get().replaceAll("%", "%%");
-                SMPHook.log("server", sanitized);
-            }
+
+
+            String line;
+            try { while (!(line = outputQueue.take()).equals(TERMINATION_STRING)) {
+                System.out.print(line);
+                System.out.printf("====SMP Hook v%s=======================================================================\n>>> ", getVersion());
+            }} catch (InterruptedException ignored) {}
 
         } while (shouldRestart.get());
     }
