@@ -221,7 +221,7 @@ public final class SMPHook {
                             shouldRestart.set(true);
                             proc.stop();
                         }
-                        SMPHook.sleep(Long.parseLong(properties().getProperty("network-check-interval")));
+                        SMPHook.sleep(Long.parseLong(properties().getProperty("network-check-interval", "3600000")));
                     }, () -> {
                         SMPHook.log("network", "Network connection interrupted. Waiting for restablish.");
                         Optional<IPv4> newCurrent;
