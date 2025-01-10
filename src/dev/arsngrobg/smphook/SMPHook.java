@@ -332,8 +332,8 @@ public final class SMPHook {
 
         ServerProcess proc = new ServerProcess(
             jarFile,
-            minHeap.isEmpty() ? HeapArg.fromString(minHeap) : null,
-            maxHeap.isEmpty() ? HeapArg.fromString(maxHeap) : null
+            !minHeap.isEmpty() ? HeapArg.fromString(minHeap) : null,
+            !maxHeap.isEmpty() ? HeapArg.fromString(maxHeap) : null
         );
         proc.init(true);
         SMPHook.log("info", "Now initialising server with command: %s", proc.getInitCommand());
