@@ -38,9 +38,9 @@ public final class HeapArg implements Comparable<HeapArg> {
                               .stream()
                               .filter(u -> u.name().charAt(0) == argStr.charAt(argStr.length() - 1))
                               .findFirst()
-                              .orElseThrow(() -> SMPHookError.getErr(Type.HEAPARG_ARGSTR_INVALID));
+                              .orElseThrow(() -> SMPHookError.getErr(Type.INVALID_HEAPARG_REPR));
             return new HeapArg(size, unit);
-        } else throw SMPHookError.getErr(Type.HEAPARG_ARGSTR_INVALID);
+        } else throw SMPHookError.getErr(Type.INVALID_HEAPARG_SIZE);
     }
 
     /**
@@ -76,7 +76,7 @@ public final class HeapArg implements Comparable<HeapArg> {
      * @throws SMPHookError if {@code size} is less-than-or-equal-to {@code zero} or if {@code unit} is {@code null}
      */
     public HeapArg(long size, Unit unit) throws SMPHookError {
-        if (size <= 0) throw SMPHookError.getErr(Type.HEAPARG_SIZE_INVALID);
+        if (size <= 0) throw SMPHookError.getErr(Type.INVALID_HEAPARG_SIZE);
         if (unit == null) SMPHookError.throwNullPointer("unit");
 
         this.size = size;
@@ -125,8 +125,10 @@ public final class HeapArg implements Comparable<HeapArg> {
 
     @Override
     public boolean equals(Object obj) {
+        if (obj == null || obj.getClass() != getClass()) return false;
         if (obj == this) return true;
-        return true;
+        HeapArg asArg = (HeapArg) obj;
+        return compareTo(asArg) == 0;
     }
 
     @Override

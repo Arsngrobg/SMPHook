@@ -22,13 +22,13 @@ package dev.arsngrobg.smphook;
 public final class SMPHookError extends Error {
     // cache for storing the pre-allocated error objects
     private static final SMPHookError[] CACHE = {
-        new SMPHookError(Type.HEAPARG_SIZE_INVALID,           "The size given is an unsigned, non-zero integer."),
-        new SMPHookError(Type.HEAPARG_ARGSTR_INVALID,         "The argStr given is an invalid pattern."),
-        new SMPHookError(Type.SERVERPROC_NOT_JARFILE,         "The file given is not a .jar file"),
-        new SMPHookError(Type.SERVERPROC_JARFILE_NOEXIST,     "The server Jar file does not exist."),
-        new SMPHookError(Type.SERVERPROC_JARFILE_INVALID,     "The server Jar file is not valid Minecraft server software."),
-        new SMPHookError(Type.SERVERPROC_MISMATCHED_HEAPARGS, "Mismatched heap arguments."),
-        new SMPHookError(Type.SERVERPROC_UNUSUAL_STATE,       "Server process in unusual state, forcefully exiting."),
+        new SMPHookError(Type.INVALID_HEAPARG_SIZE,           "The size given is an unsigned, non-zero integer."),
+        new SMPHookError(Type.INVALID_HEAPARG_REPR,           "The argStr given is an invalid pattern."),
+        new SMPHookError(Type.INVALID_JARFILE,                "The server Jar file is not valid Minecraft server software."),
+        new SMPHookError(Type.NOT_JARFILE,                    "The server Jar file is not a .jar file."),
+        new SMPHookError(Type.JARFILE_NOEXIST,                "The server jar file does not exist"),
+        new SMPHookError(Type.MISMATCHED_HEAPARGS,            "Mismatched heap arguments."),
+        new SMPHookError(Type.UNUSUAL_SERVER_STATE,           "Server process in unusual state, forcefully exiting."),
         new SMPHookError(Type.INVALID_DISCORD_WEBHOOK_URL,    "The provided webhook url is invalid."),
         new SMPHookError(Type.INVALID_IPV4_ADDRESS,           "The address string given is not a valid IPv4 string.")
     };
@@ -120,17 +120,14 @@ public final class SMPHookError extends Error {
         GENERIC,                // throw generic error - for testing purposes
         NULL_POINTER,           // throw for null pointers
 
-        HEAPARG_SIZE_INVALID,
-        HEAPARG_ARGSTR_INVALID,
-
-        SERVERPROC_NOT_JARFILE,
-        SERVERPROC_JARFILE_NOEXIST,
-        SERVERPROC_JARFILE_INVALID,
-        SERVERPROC_MISMATCHED_HEAPARGS,
-        SERVERPROC_UNUSUAL_STATE,
-
+        INVALID_HEAPARG_SIZE,
+        INVALID_HEAPARG_REPR,
+        INVALID_JARFILE,
+        NOT_JARFILE,
+        JARFILE_NOEXIST,
+        MISMATCHED_HEAPARGS,
+        UNUSUAL_SERVER_STATE,
         INVALID_DISCORD_WEBHOOK_URL,
-
         INVALID_IPV4_ADDRESS
     }
 

@@ -1,6 +1,10 @@
 # Config files
 hook.properties
 
+# Log files
+.log
+/logs
+
 # Project Folders
 /.idea
 /.vscode
@@ -28,6 +32,9 @@ hook.properties
 *.zip
 *.tar.gz
 *.rar
+
+# Don't ignore .jar files in the lib directory
+!lib/*.jar
 
 # virtual machine crash logs, see http://www.java.com/en/download/help/error_hotspot.xml
 hs_err_pid*

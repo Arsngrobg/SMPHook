@@ -27,7 +27,7 @@ public final class IPv4 {
         try (InputStream istream = pb.start().getInputStream()) {
             byte[] bytes = istream.readAllBytes();
             return Optional.of(new IPv4(new String(bytes)));
-        } catch (IOException ignored) { return Optional.empty(); }
+        } catch (IOException | SMPHookError ignored) { return Optional.empty(); } // this is the only case where we can overlook the error being thrown
     }
 
     // https://stackoverflow.com/questions/5284147/validating-ipv4-addresses-with-regexp

@@ -3,8 +3,11 @@ package dev.arsngrobg.smphook;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintStream;
+import java.time.LocalTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.NoSuchElementException;
@@ -12,11 +15,14 @@ import java.util.Optional;
 import java.util.Properties;
 import java.util.Scanner;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Function;
 
+import dev.arsngrobg.smphook.core.DiscordWebhook;
 import dev.arsngrobg.smphook.core.HeapArg;
 import dev.arsngrobg.smphook.core.IPv4;
 import dev.arsngrobg.smphook.core.ServerProcess;
-
+ 
 /**
  * <p>The main program.</p>
  * 
@@ -32,31 +38,12 @@ public final class SMPHook {
 
     /** <p>The file where the configuration for SMPHook is located.</p> */
     public static final File PROPERTIES_FILE = new File("hook.properties");
+    private static final boolean prettyPrint = properties().getProperty("pretty-print").equals("true");
 
-    private static final AtomicBoolean shouldRestart = new AtomicBoolean(false);
-    private static final boolean prettyPrint = properties().getProperty("prettyPrint").equals("true");
+    /** <p>The file handle to the log file in the current SMPHook session.</p> */
+    public static final File LOG_FILE = new File(String.format("logs%s%d.log", File.separator, System.currentTimeMillis()));
 
     private static final List<Thread> workers = new ArrayList<>();
-
-    static {
-        // fire all workers on JVM shutsdown (unemployment)
-        SMPHook.doOnExit(() -> {
-            workers.forEach(t -> t.interrupt());
-            workers.clear();
-        });
-
-        // custom PrintStream for ANSI-escape codes
-        PrintStream customPrintStream = new PrintStream(System.out) {
-            @Override
-            public void print(String s) {
-                if (!prettyPrint) {
-                    s = s.replaceAll("\\033(?:[@-Z\\\\-_]|\\[[0-?]*[ -/]*[@-~])", "");
-                }
-                super.print(s);
-            }
-        };
-        System.setOut(customPrintStream);
-    }
 
     /**
      * <p>The default {@link Properties} found in the {@code hook.properties} file.
@@ -67,10 +54,10 @@ public final class SMPHook {
      */
     public static Properties defaultProperties(boolean forceReset) {
         Properties defaults = new Properties();
-        defaults.setProperty("prettyPrint",            "true");
-        defaults.setProperty("jarFile",                "");
-        defaults.setProperty("minHeap",                "");
-        defaults.setProperty("maxHeap",                "");
+        defaults.setProperty("pretty-print",           "true");
+        defaults.setProperty("jar-file",               "");
+        defaults.setProperty("min-heap",               "");
+        defaults.setProperty("max-heap",               "");
         defaults.setProperty("webhook-url",            "");
         defaults.setProperty("network-check-interval", "3600000"); // 1 hour
 
@@ -102,21 +89,35 @@ public final class SMPHook {
     }
 
     /**
-     * <p>Performs the {@code task} on JVM shutdown.
-     *    You can add more than one task
-     * </p>
-     * @param exitTask - the task to perform on exit
+     * <p>Halts for the number of {@code millis}.</p>
+     * <p>This method will log if it was unable to sleep.</p>
+     * @param millis - the amount of time to sleep for
      */
-    public static void doOnExit(Runnable exitTask) {
-        if (exitTask == null) return;
-
-        Thread thread = new Thread(exitTask);
-        Runtime.getRuntime().addShutdownHook(thread);
+    public static void sleep(long millis) {
+        try { Thread.sleep(millis); }
+        catch (InterruptedException ignored) { SMPHook.log("warn", "Unable to sleep for %d milliseconds.", millis); }
     }
 
     /**
-     * <p>Assigns a worker thread to perform the specific {@code task}.</p>
-     * @param task - the task to assign to a worker
+     * <p>Performs the {@code task} on JVM shutdown.
+     *    You can add more than one task.
+     * </p>
+     * @param task - a task to perform when on JVM shutdown
+     */
+    public static void doOnExit(Runnable task) {
+        if (task == null) return;
+
+        Thread thread = new Thread(task, "OnExit");
+        Runtime.getRuntime().addShutdownHook(thread);
+
+        SMPHook.log("JVM", "A shutdown hook has been provided to the JVM runtime.");
+    }
+
+    /**
+     * <p>Assigns the given {@code task} and assigns a virtual thread (worker) to complete the task.
+     *    On completion, the worker is let go and dereferenced.
+     * </p>
+     * @param task - the task for the worker to be assigned to
      */
     public static void assignWorkerTo(Runnable task) {
         if (task == null) return;
@@ -125,71 +126,137 @@ public final class SMPHook {
 
         Runnable wrapper = () -> {
             task.run();
-            workers.remove(workerIdx);
+            workers.set(workerIdx, null);
+            SMPHook.log("workers", "Worker#%d has completed their task.", workerIdx + 1);
         };
 
         String workerID = String.format("Worker#%d", workerIdx + 1);
-        Thread thread = Thread.ofVirtual().name(workerID).unstarted(wrapper);
-        thread.start();
+        Thread workerThread = Thread.ofVirtual().name(workerID).unstarted(wrapper);
+        workers.add(workerThread);
 
-        workers.add(thread);
+        SMPHook.log("workers", "%s has been hired.", workerID);
+
+        workerThread.start();
     }
 
     /**
-     * <p>Hooks to the given server {@code proc}, and initialises useful functionality.</p>
-     * @param proc - the server process to hook onto
+     * <p>Logs the given {@code format} formatted with the {@code args} supplied to the method and tagged with the {@code category} and the current time.</p>
+     * <p>The resulting string is then logged to the {@link #LOG_FILE},
+     *    and then <b>"fancified"</b> if {@code prettyPrint} is enabled in the {@code hook.properties} file.
+     * </p>
+     * <p>This method also newlines the output string so is not required.</p>
+     * @param category - the type of log
+     * @param format - the format string to log 
+     * @param args - the argument to be inserted into the format string (optional)
      */
+    public static void log(String category, String format, Object...args) {
+        String timestamp = LocalTime.now().format(DateTimeFormatter.ofPattern("HH:mm:ss"));
+
+        final Function<String, int[]> categoryColor = c -> {
+            return switch (c.toLowerCase()) {
+                case "warn"    -> new int[] {255, 255,   0};
+                case "server"  -> new int[] {50 , 168, 82 };
+                case "network" -> new int[] {0  , 122, 255};
+                case "discord" -> new int[] {114, 137, 218};
+                case "jvm"     -> new int[] {186, 148, 106};
+                case "workers" -> new int[] {32,  178, 170};
+                default        -> new int[] {255, 255, 255};
+            };
+        };
+
+        int[] categoryColour = categoryColor.apply(category);
+
+        String logOutput = String.format(
+            "[%-10s] [%s] :: %s\n",
+            category.toUpperCase(), timestamp, String.format(format, args)
+        );
+
+        try (FileWriter fwriter = new FileWriter(LOG_FILE, true)) {
+            fwriter.write(logOutput);
+        } catch (IOException e) { SMPHook.log("warn", "Unable to log the current line to %s.", LOG_FILE.getName()); }
+
+        String consoleOutput = String.format(
+            "\033[48;2;15;15;15m\033[0G\033[A\033[K\033[38;2;%d;%d;%dm%s\033[90m%s\033[97m%s",
+            categoryColour[0], categoryColour[1], categoryColour[2],
+            logOutput.substring(0, 12),
+            logOutput.substring(12, 23),
+            logOutput.substring(23)
+        );
+        System.out.print(consoleOutput);
+
+        System.out.printf("====SMP Hook v%s=======================================================================\n>>> ", getVersion());
+    }
+
     public static void hookTo(ServerProcess proc) {
         if (!proc.isRunning()) proc.init(false);
 
-        shouldRestart.set(false);
-
-        SMPHook.doOnExit(() -> System.out.print("\033[0m\033[2J\033[H"));
         SMPHook.doOnExit(proc::stop);
 
-        var properties = properties();
+        DiscordWebhook webhook = new DiscordWebhook(properties().getProperty("webhook-url"));
 
-        Runnable ipCheckTask = () -> {
-            IPv4 lastKnown = IPv4.queryPublic().orElseThrow();
-            while (proc.isRunning()) {
-                try { Thread.sleep(Long.parseLong(properties.getProperty("network-check-interval"))); }
-                catch (InterruptedException e) { e.printStackTrace(); }
-                IPv4 current = IPv4.queryPublic().orElse(null);
+        AtomicBoolean shouldRestart = new AtomicBoolean(false);
+        do {
 
-                if (current != null && !current.equals(lastKnown)) {
-                    shouldRestart.set(true);
+            Optional<IPv4> lastKnownIp = IPv4.queryPublic();
+            Runnable netStateTask = () -> {
+                if (lastKnownIp.isEmpty()) { // if the network is offline - skip network task
+                    SMPHook.log("network", "Your network is offline.");
+                    return;
                 }
-            }
-        };
-        SMPHook.assignWorkerTo(ipCheckTask);
 
-        Runnable inputTask = () -> {
-            try (Scanner scanner = new Scanner(System.in)) {
+                SMPHook.log("network", "Running this server on the IPv4 address: %s", lastKnownIp.get().getAddress());
+                SMPHook.sleep(5000);
+
                 while (proc.isRunning()) {
-                    String input = scanner.nextLine().trim();
-
-                    System.out.print("\033[A");
-
-                    boolean success = proc.rawInput(input);
-
-                    if (input.equals("stop") && success) {
-                        break;
-                    }
+                    Optional<IPv4> current = IPv4.queryPublic();
+                    current.ifPresentOrElse(ip -> {
+                        if (!ip.equals(lastKnownIp.get())) {
+                            SMPHook.log("network", "IPv4 address of your network has changed. Commencing restart...");
+                            shouldRestart.set(true);
+                            proc.stop();
+                        }
+                        SMPHook.sleep(Long.parseLong(properties().getProperty("network-check-interval")));
+                    }, () -> {
+                        SMPHook.log("network", "Network connection interrupted. Waiting for restablish.");
+                        Optional<IPv4> newCurrent;
+                        do {
+                            SMPHook.sleep(5000);
+                            newCurrent = IPv4.queryPublic();
+                        } while (newCurrent.isEmpty());
+                        SMPHook.log("network", "Connection restablished.");
+                    });
                 }
-            } catch (NoSuchElementException ignored) {} // usually caused by CTRL+C
-        };
-        SMPHook.assignWorkerTo(inputTask);
+            };
+            SMPHook.assignWorkerTo(netStateTask);
 
-        System.out.print("\033[48;2;15;15;15m\033[2J\033[H");
+            Runnable procInputTask = () -> {
+                try (Scanner scanner = new Scanner(System.in)) {
+                    while (proc.isRunning()) {
+                        String input = scanner.nextLine().trim();
+                        System.out.print("\033[A");
+    
+                        boolean success = proc.rawInput(input);
+                        if (input.equals("stop") && success) {
+                            break;
+                        }
+                    }
+                } catch (NoSuchElementException ignored) {} // caused by CTRL+C
+            };
+            SMPHook.assignWorkerTo(procInputTask);
 
-        Optional<String> output;
-        while ((output = proc.rawOutput()).isPresent()) {
-            System.out.printf("\033[48;2;15;15;15m\033[0G\033[A\033[K\033[38;2;50;168;82m[Server]\033[97m :: %s\n", output.get());
-            if (prettyPrint) {
-                System.out.printf("====SMP Hook v%s=====================================================================\n", getVersion());
-                System.out.print(">>> ");
+            Runnable notifyTask = () -> {
+                SMPHook.sleep(15000); // give buffer time as inbetween the init and now it may no actually start the server
+                webhook.post(String.format("{\"content\":\"The server is online. The IP is ```%s```\"}", lastKnownIp.get()));
+            };
+            SMPHook.assignWorkerTo(notifyTask);
+    
+            Optional<String> procOutput;
+            while ((procOutput = proc.rawOutput()).isPresent()) {
+                String sanitized = procOutput.get().replaceAll("%", "%%");
+                SMPHook.log("server", sanitized);
             }
-        }
+
+        } while (shouldRestart.get());
     }
 
     /**
@@ -208,18 +275,54 @@ public final class SMPHook {
             return;
         }
 
+        // configurations
+
+        // creating the log file - if required
+        File logDir = LOG_FILE.getParentFile();
+        boolean success = logDir.mkdir();
+        if (success) {
+            SMPHook.log("info", "No log directory found. Creating logs directory.");
+        }
+
+        // interrupt and fire all workers on JVM shutdown (mass unemployment)
+        SMPHook.doOnExit(() -> {
+            AtomicInteger workerIdx = new AtomicInteger(0);
+            workers.stream().forEach(w -> {
+                workerIdx.incrementAndGet();
+                if (w == null) return;
+                w.interrupt();
+                SMPHook.log("workers", "Worker#%d has been let go.", workerIdx.get());
+            });
+            workers.clear();
+        });
+
+        // custom PrintStream for ANSI-escape codes
+        PrintStream customPrintStream = new PrintStream(System.out) {
+            @Override
+            public void print(String s) {
+                if (!prettyPrint) {
+                    s = s.replaceAll("\\033(?:[@-Z\\\\-_]|\\[[0-?]*[ -/]*[@-~])", "");
+                }
+                super.print(s);
+            }
+        };
+        System.setOut(customPrintStream);
+
         // main control flow
-        var properties = properties();
-        String jarFile = properties.getProperty("jarFile");
-        String minHeap = properties.getProperty("minHeap");
-        String maxHeap = properties.getProperty("maxHeap");
+        System.out.print("\033[48;2;15;15;15m\033[2J\033[H");
+
+        Properties prop = properties();
+        String jarFile = prop.getProperty("jar-file");
+        String minHeap = prop.getProperty("min-heap");
+        String maxHeap = prop.getProperty("max-heap");
 
         ServerProcess proc = new ServerProcess(
             jarFile,
-            minHeap.isEmpty() ? null : HeapArg.fromString(minHeap),
-            maxHeap.isEmpty() ? null : HeapArg.fromString(maxHeap)
+            minHeap != null ? HeapArg.fromString(minHeap) : null,
+            maxHeap != null ? HeapArg.fromString(maxHeap) : null
         );
         proc.init(true);
+        SMPHook.log("info", "Now initialising server with command: %s", proc.getInitCommand());
 
         SMPHook.hookTo(proc);
     }

@@ -13,6 +13,8 @@ import java.util.jar.Manifest;
 import dev.arsngrobg.smphook.SMPHookError;
 import dev.arsngrobg.smphook.SMPHookError.Type;
 
+// TODO: support forge, paper, etc...
+
 /**
  * <p>This is an interface for a {@link java.lang.Process} for a Minecraft server instance.</p>
  * <p>This handles the I/O operations between the SMPHook and the server instance ({@link #rawInput(String)} & {@link #rawOutput()}).</p>
@@ -59,18 +61,18 @@ public final class ServerProcess {
 
         this.jarFile = new File(jarFile);
         if (!this.jarFile.getName().endsWith(".jar")) {
-            throw SMPHookError.getErr(Type.SERVERPROC_NOT_JARFILE);
+            throw SMPHookError.getErr(Type.NOT_JARFILE);
         }
 
         if (!this.jarFile.exists()) {
-            throw SMPHookError.getErr(Type.SERVERPROC_JARFILE_NOEXIST);
+            throw SMPHookError.getErr(Type.JARFILE_NOEXIST);
         }
 
         try (JarFile asJarFile = new JarFile(this.jarFile)) {
             Manifest manifest = asJarFile.getManifest();
             String mainClass = manifest.getMainAttributes().getValue("Main-Class");
-            if (!mainClass.equals("net.minecraft.bundler.Main")) {
-                throw SMPHookError.getErr(Type.SERVERPROC_JARFILE_INVALID);
+            if (!mainClass.equals("net.minecraft.bundler.Main") && !mainClass.equals("net.fabricmc.installer.ServerLauncher")) {
+                throw SMPHookError.getErr(Type.INVALID_JARFILE);
             }
         } catch (IOException e) { SMPHookError.throwWithCause(e); }
 
@@ -79,7 +81,7 @@ public final class ServerProcess {
         this.minHeap.ifPresent(min -> {
             this.maxHeap.ifPresent(max -> {
                 if (min.compareTo(max) > 0) {
-                    throw SMPHookError.getErr(Type.SERVERPROC_MISMATCHED_HEAPARGS);
+                    throw SMPHookError.getErr(Type.MISMATCHED_HEAPARGS);
                 }
             });
         });
@@ -217,7 +219,7 @@ public final class ServerProcess {
     public boolean isRunning() throws SMPHookError {
         boolean running = process != null;
         if (running && (istream == null || ostream == null)) {
-            throw SMPHookError.getErr(Type.SERVERPROC_UNUSUAL_STATE);
+            throw SMPHookError.getErr(Type.UNUSUAL_SERVER_STATE);
         }
         return running;
     }
