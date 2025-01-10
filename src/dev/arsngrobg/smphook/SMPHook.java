@@ -261,7 +261,7 @@ public final class SMPHook {
             SMPHook.assignWorkerTo(procOutputTask);
 
             Runnable notifyTask = () -> {
-                SMPHook.sleep(15000); // give buffer time as inbetween the init and now it may no actually start the server
+                SMPHook.sleep(15000); // give buffer time as inbetween the init and now it may not actually start the server
                 webhook.post(String.format("{\"content\":\"The server is online. The IP is ```%s```\"}", lastKnownIp.get()));
             };
             SMPHook.assignWorkerTo(notifyTask);
