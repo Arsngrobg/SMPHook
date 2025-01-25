@@ -1,0 +1,216 @@
+package dev.arsngrobg.smphook.server;
+
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.IOException;
+import java.util.Optional;
+import java.util.stream.Stream;
+
+import dev.arsngrobg.smphook.SMPHookError;
+import dev.arsngrobg.smphook.SMPHookError.ErrorType;
+import static dev.arsngrobg.smphook.SMPHookError.condition;
+
+/**
+ * <p>The {@code ServerProcess} class wraps a {@link java.lang.Process}, running a Java Minecraft server process.</p>
+ * 
+ * <p>This class handles the stopping, starting, and I/O operations between SMPHook and the server.</p>
+ * 
+ * <p>A server process is highly customizable, allowing the use of Java Virtual Machine (JVM) options using the {@link JVMOption} class.
+ *    The minimum and maximum allocation pools can be defined using the {@link HeapArg} class.
+ *    This provides a near 1:1 interface for creating a server process but through the Java environment.
+ * </p>
+ * 
+ * <p>The underlying process is not initiated on object instantiation, but rather through the {@link #init(boolean)} method.</p>
+ * 
+ * @author Arsngrobg
+ * @since  1.0
+ */
+public final class ServerProcess {
+    /** <p>The String that represents the End Of File (EOF) character output by the server when it has finished running.</p> */
+    public static final String EOF = "\0";
+
+    // static reference to common error case
+    private static final SMPHookError PROC_NOT_RUNNING_ERROR = SMPHookError.with(ErrorType.IO, "Server process is not running.");
+
+    // metadata
+    private final File serverJar;
+    private final Optional<HeapArg> minHeap;
+    private final Optional<HeapArg> maxHeap;
+    private final JVMOption[] options;
+
+    // process data
+    private Process process;
+    private BufferedWriter istream;
+    private BufferedReader ostream;
+
+    /**
+     * <p>Instantiates a {@code ServerProcess} object.</p>
+     * 
+     * <p>The constructor is for validation purposes, checking to see if the {@code serverJar} is the correct JAR file for Minecraft: Java Edition servers.</p>
+     * 
+     * <p>The {@code minHeap} & {@code maxHeap} arguments are <b>optional</b> and can be {@code null}.
+     *    You can supply a variable number of Java Virtual Machine (JVM) options to customize the Java runtime (see {@link JVMOption}).
+     *    These arguments affect the result of the method {@link #getInitCommand()}.
+     * </p>
+     * 
+     * @param serverJar - the Minecraft: Java Edition server JAR file to be ran
+     * @param minHeap - the minimum allocation pool for the server, can be {@code null}
+     * @param maxHeap - the maximum allocation pool for the server, can be {@code null}
+     * @param options - a variable number of JVM options
+     * @throws SMPHookError if {@code serverJar} is: {@code null}, doesn't exist, or not a file; the {@code minHeap} & {@code maxHeap} are mismatched
+     */
+    public ServerProcess(String serverJar, HeapArg minHeap, HeapArg maxHeap, JVMOption... options) throws SMPHookError {
+        try { this.serverJar = new File(serverJar); }
+        catch (NullPointerException e) { throw SMPHookError.withCause(e); }
+
+        SMPHookError.caseThrow(
+            condition(() -> !this.serverJar.exists(), SMPHookError.with(ErrorType.FILE, "The serverJar provided does not exist.")),
+            condition(() -> !this.serverJar.isFile(), SMPHookError.with(ErrorType.FILE, "The serverJar provided is not a file."))
+        );
+
+        this.minHeap = Optional.ofNullable(minHeap);
+        this.maxHeap = Optional.ofNullable(maxHeap);
+        // this is cleaner than using the Optional methods
+        if ((minHeap != null && maxHeap != null) && minHeap.compareTo(maxHeap) == 1) {
+            throw SMPHookError.withMessage("Mismatched HeapArgs.");
+        }
+
+        this.options = Stream.of(options).filter(o -> o != null).toArray(JVMOption[]::new);
+    }
+
+    /**
+     * <p>Simulates the input you see in Minecraft: Java Edition, and processes the {@code command} as one complete command.
+     *    Any escape characters are replaced with their literal equivalent (e.g. any {@code '\n'} are replaced as {@code '\\n'}).
+     * </p>
+     * 
+     * @param command - the Minecraft command to process
+     * @throws SMPHookError if the process is not running, or an {@link java.io.IOException} occurs
+     */
+    public void rawInput(String command) throws SMPHookError {
+        if (!isRunning()) {
+            throw PROC_NOT_RUNNING_ERROR;
+        }
+
+        String cleanedCommand = command.replaceAll("\n", "\\n");
+
+        try {
+            istream.write(cleanedCommand);
+            istream.newLine();
+            istream.flush();
+        } catch (IOException e) {
+            throw SMPHookError.withCause(e);
+        }
+    }
+
+    /**
+     * <p>Reads out the next line that was output by the server in a First in First Out (FIFO) fashion.</p>
+     * 
+     * @return the next line
+     * @throws SMPHookError if the process is not running, or an {@link java.io.IOException} occurs
+     */
+    public String rawOutput() throws SMPHookError {
+        if (!isRunning()) {
+            throw PROC_NOT_RUNNING_ERROR;
+        }
+
+        try {
+            String line = ostream.readLine();
+            return line == null ? EOF : line;
+        } catch (IOException e) {
+            throw SMPHookError.withCause(e);
+        }
+    }
+
+    /**
+     * <p>Attemps to stop the server process by pumping the {@code stop} command to the process' input stream.</p>
+     * 
+     * <p>This method is not guaranteed to successfully stop the server (see {@link #forceStop()}).</p>
+     * 
+     * @throws SMPHookError if the process is not running, or an {@link java.io.IOException} occurs
+     */
+    public void stop() throws SMPHookError {
+        if (!isRunning()) {
+            throw PROC_NOT_RUNNING_ERROR;
+        }
+        rawInput("stop");
+    }
+
+    /**
+     * <p>Forcefully stops the server process.</p>
+     * 
+     * @throws SMPHookError if the process is not running
+     */
+    public void forceStop() throws SMPHookError {
+        if (!isRunning()) {
+            throw PROC_NOT_RUNNING_ERROR;
+        }
+        process.destroyForcibly();
+    }
+
+    /**
+     * <p>Checks to see if the server is running.
+     *    If so, it checks to make sure the process is in a good state, if not an {@link SMPHookError} is thrown.
+     *    The server process is also forcibly stopped.
+     * </p>
+     * 
+     * @return {@code true} if the server process is running, {@code false} if otherwise
+     * @throws SMPHookError if the server process is in an unusual state
+     */
+    public boolean isRunning() throws SMPHookError {
+        boolean isRunning = process != null;
+        if (isRunning && (istream == null || ostream == null)) { // this should never happen but always good to check
+            forceStop();
+            throw SMPHookError.with(ErrorType.IO, "Server process in unusual state - forcefully aborting.");
+        }
+        return isRunning;
+    }
+
+    /**
+     * <p>Gets the PID of this server process.</p>
+     * 
+     * @return this server process' PID
+     * @throws SMPHookError if the process is not running
+     */
+    public long getPID() throws SMPHookError {
+        if (!isRunning()) {
+            throw PROC_NOT_RUNNING_ERROR;
+        }
+        process.destroyForcibly();
+        return process.pid();
+    }
+
+    /** @return the command that is used to initiate the server */
+    public String getInitCommand() {
+        StringBuilder commandBuilder = new StringBuilder("java");
+        minHeap.ifPresent(min -> commandBuilder.append(min.toXms()).append(" "));
+        maxHeap.ifPresent(max -> commandBuilder.append(max.toXmx()).append(" "));
+
+        for (JVMOption option : options) {
+            commandBuilder.append(option).append(" ");
+        }
+
+        commandBuilder.append("-jar ").append(serverJar.getName());
+        return commandBuilder.toString();
+    }
+
+    /** @return the server jar file that is running or to be running */
+    public File getServerJar() {
+        return serverJar;
+    }
+
+    /** @return the minimum allocation pool argument for this server process, can be {@code null} */
+    public HeapArg getMinHeap() {
+        return minHeap.orElse(null);
+    }
+
+    /** @return the maximum allocation pool argument for this server process, can be {@code null} */
+    public HeapArg getMaxHeap() {
+        return maxHeap.orElse(null);
+    }
+
+    /** @return the Java Virtual Machine (JVM) options used to customize this server process, can be <i>empty</i> */
+    public JVMOption[] getOptions() {
+        return options;
+    }
+}

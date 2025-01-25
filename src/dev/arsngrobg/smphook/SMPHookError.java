@@ -1,168 +1,191 @@
 package dev.arsngrobg.smphook;
 
+import java.util.Objects;
+import java.util.function.Supplier;
+
 /**
- * <p>The {@code SMPHookError} class is both a manager class and implementation of the {@link java.lang.Error} throwable.</p>
- * <p>All irregular state in this software is recognised as a non-redeemable state and therefore an error is thrown in any unnatural cirumstance.</p>
- * <p>Common states where these errors are thrown are as follows:
- *    <ul>
- *        <li>passing null as arguments into methods that cannot handle null references</li>
- *        <li>passing signed value into a method which requires unsigned values</li>
- *        <li>regex pattern-matching failure</li>
- *        <li>IO errors</li>
- *    </ul>
+ * <p>The {@code SMPHookError} class represents an error in the SMPHook system.
+ *    This class encapsulates various error types and provides factory methods to create errors, including <b>GENERIC</b>, <b>NULL_REFERENCE</b>, and <b>PROPOGATED</b> types.
  * </p>
- * <p>To get a pre-allocated error type from this class, juse invoke {@link SMPHookError#getErr(Type)}.</p>
- * <p>You can throw a generic error using {@link SMPHookError#throwGeneric(String)}.</p>
- * <p>You can throw a generic error with a cause
- * <p>You can throw a null pointer error using {@link SMPHookError#throwNullPointer(String)}.</p>
+ * 
+ * <p>See {@link SMPHookError.ErrorType} for the various supported error types for an {@code SMPHookError}.</p>
+ * 
+ * <p>It extends the {@link java.lang.Error} class, so it is said that any unusual state is considered un-recoverable.</p>
  * 
  * @author Arsngrobg
  * @since  1.0
  */
 public final class SMPHookError extends Error {
-    // cache for storing the pre-allocated error objects
-    private static final SMPHookError[] CACHE = {
-        new SMPHookError(Type.INVALID_HEAPARG_SIZE,           "The size given is an unsigned, non-zero integer."),
-        new SMPHookError(Type.INVALID_HEAPARG_REPR,           "The argStr given is an invalid pattern."),
-        new SMPHookError(Type.INVALID_JARFILE,                "The server Jar file is not valid Minecraft server software."),
-        new SMPHookError(Type.NOT_JARFILE,                    "The server Jar file is not a .jar file."),
-        new SMPHookError(Type.JARFILE_NOEXIST,                "The server jar file does not exist"),
-        new SMPHookError(Type.MISMATCHED_HEAPARGS,            "Mismatched heap arguments."),
-        new SMPHookError(Type.UNUSUAL_SERVER_STATE,           "Server process in unusual state, forcefully exiting."),
-        new SMPHookError(Type.INVALID_DISCORD_WEBHOOK_URL,    "The provided webhook url is invalid."),
-        new SMPHookError(Type.INVALID_IPV4_ADDRESS,           "The address string given is not a valid IPv4 string.")
-    };
+    /** <p>Enumeration representing different types of errors.</p> */
+    public static enum ErrorType {
+        /** <p>The most basic error.</p> */
+        GENERIC,
+        /** <p>An error caused by files.</p> */
+        FILE,
+        /** <p>An error caused by failed I/O operations.</p> */
+        IO,
+        /** <p>An error caused by a null reference.</p> */
+        NULL_REFERENCE,
+        /** <p>An error caused by the internal type wrapped by a wrapper type.</p> */
+        WRAPPER_TYPE,
+        /** <p>An error that is propogated by another throwable.</p> */
+        PROPAGATED
+    }
 
-    // simple check for making sure all static types have been cached
-    static {
-        Type[] types = Type.values();
-        if (types.length - 2 != CACHE.length) {
-            throw new Error("(DEV_ASSERTION_ERROR): Not all static error references have been allocated.");
-        }
+    /** <p>A simple Data Tranfer Object (DTO) for a condition case used in {@link #caseThrow(Case...)}</p> */
+    public static record Case(Supplier<Boolean> condition, SMPHookError ifTrue) {}
 
-        for (int i = 2; i < types.length; i++) {
-            if (CACHE[i - 2].type != types[i]) {
-                throw new Error("(DEV_ASSERTION_ERROR): Not all static error references have been allocated & duplicate types found.");
-            }
-        }
+    /**
+     * <p>Constructs a Data Transfer Object (DTO) to be passed into the {@link caseThrow(Case...)} method.</p>
+     * 
+     * <p>To be used in conjunction with the {@link #caseThrow(Case...)} method.</p>
+     * 
+     * <p>This {@link Case} DTO is designed to hold the condition in which needs to pass or else the error ({@code ifFalse}) is thrown.</p>
+     * 
+     * @param condition - a function to test
+     * @param ifTrue - the error thrown if the {@code condition} test is {@code true}
+     * @return a {@link Case} DTO
+     * @throws SMPHookError if {@code condition} or {@code ifTrue} is {@code null}
+     * @see #caseThrow(Case...)
+     */
+    public static SMPHookError.Case condition(Supplier<Boolean> condition, SMPHookError ifTrue) throws SMPHookError {
+        if (condition == null) throw SMPHookError.nullReference("condition");
+        if (ifTrue == null) throw SMPHookError.nullReference("ifFalse");
+        return new Case(condition, ifTrue);
     }
 
     /**
-     * <p>Method to retrieve one of the pre-defined error types defined by the {@link SMPHookError.Type} enum.</p>
-     * <p>This method throws an {@link IllegalArgumentException} when supplied with {@link Type#GENERIC} or {@link Type#NULL_POINTER}
-     *    since generic errors are dynamically allocated and null pointer errors are a special case of generic error.
+     * <p>Tests each case condition supplied to this method in order.
+     *    The first condition that returns {@code true} throws the assigned {@code SMPHookError}.
      * </p>
-     * @param type - a type that is within the {@link SMPHookError.Type} enum that is not {@link Type#GENERIC} or {@link Type#NULL_POINTER}
-     * @return the dynamically allocated {@code SMPHookError} instance with the given {@code type}
-     * @throws IllegalArgumentException if the {@link Type#GENERIC} or {@link Type#NULL_POINTER}
-     */
-    public static SMPHookError getErr(Type type) throws IllegalArgumentException {
-        if (type == null) throw new IllegalArgumentException("Enum value 'type' cannot be a null reference.");
-
-        switch (type) {
-            case Type.GENERIC:
-                throw new IllegalArgumentException("Cannot throw GENERIC ERRORS using this method - use throwGeneric(String) instead.");
-            case Type.NULL_POINTER:
-                throw new IllegalArgumentException("NULL_POINTER errors are a special case of generic error - use throwNullPointer(String) instead.");
-            default:
-                return CACHE[type.ordinal() - 2];
-        }
-    }
-
-    /**
-     * <p>Throws a {@link SMPHookError.Type#GENERIC} error with the specified error message ({@code message}).</p>
-     * @param message - the message to be displayed when thrown
+     * 
+     * <p>To easily define a condition, use the {@link #condition(Supplier, SMPHookError)} method.</p>
+     * 
+     * @param cases - the cases to check for
      * @throws SMPHookError
-     */
-    public static void throwGeneric(String message) throws SMPHookError {
-        throw new SMPHookError(Type.GENERIC, message);
-    }
-
-    /**
-     * <p>Throws a {@link SMPHookError.Type#GENERIC} error with the specified {@code cause} {@link Throwable}.</p>
-     * @param cause - the throwable that caused this error.
-     * @throws SMPHookError
-     */
-    public static void throwWithCause(Throwable cause) throws SMPHookError {
-        throw new SMPHookError(Type.GENERIC, String.format("Caused by %s.", cause.getClass().getSimpleName()));
-    }
-
-    /**
-     * <p>Throws a {@link SMPHookError.Type#NULL_POINTER} error with a error message displaying that the {@code varNames} are {@code null}.</p>
-     * <b>This is a special case of a generic error.</b>
-     * @param varNames - the variable name(s) to display in the error message - can be left empty (throws a generic message instead)
-     * @throws SMPHookError
+     * @see SMPHookError#condition(Supplier, SMPHookError)
      */
     @SafeVarargs
-    public static void throwNullPointer(String... varNames) throws SMPHookError {
-        String errMsg;
-
-        if (varNames.length > 0) {
-            StringBuilder sb = new StringBuilder();
-            for (String varName : varNames) {
-                sb.append("'").append(varName).append("'").append(", ");
-            }
-            sb.setLength(sb.length() - 2); // remove trailing comma
-            sb.append(" cannot be null.");
-            errMsg = sb.toString();
-        } else errMsg = "Null references disallowed";
-
-        throw new SMPHookError(Type.NULL_POINTER, errMsg);
+    public static void caseThrow(SMPHookError.Case... cases) throws SMPHookError {
+        for (Case c : cases) {
+            boolean isTrue = c.condition.get();
+            if (isTrue) throw c.ifTrue;
+        }
     }
 
     /**
-     * <p>The different types of errors that are available in this class.</p>
-     * <p>{@code GENERIC} errors are dynamically instantiated, and display custom error messages.</p>
-     * <p>{@code NULL_POINTER} errors are a special case of {@code GENERIC}, specific to null references.</p>
-     * <p>The rest are all statically allocated.</p>
+     * <p>Instantiates a {@link ErrorType#PROPAGATED} {@code SMPHookError} instance with a detailed error message,
+     *    including the {@code .java} file and line number this occurred in and the message (if provided).
+     * </p>
+     * 
+     * @param t - the {@link java.lang.Throwable}
+     * @return a new <b>PROPOGATED</b> {@code SMPHookError} instance
+     * @throws SMPHookError if t is {@code null}
      */
-    public static enum Type {
-        GENERIC,                // throw generic error - for testing purposes
-        NULL_POINTER,           // throw for null pointers
+    public static SMPHookError withCause(Throwable t) throws SMPHookError {
+        if (t == null) SMPHookError.nullReference("t");
 
-        INVALID_HEAPARG_SIZE,
-        INVALID_HEAPARG_REPR,
-        INVALID_JARFILE,
-        NOT_JARFILE,
-        JARFILE_NOEXIST,
-        MISMATCHED_HEAPARGS,
-        UNUSUAL_SERVER_STATE,
-        INVALID_DISCORD_WEBHOOK_URL,
-        INVALID_IPV4_ADDRESS
+        StringBuilder sb = new StringBuilder();
+
+        StackTraceElement first = t.getStackTrace()[0];
+        sb.append(t.getClass().getName())
+          .append(" was thrown at ")
+          .append(first.getFileName().substring(0, first.getFileName().length() - 4))
+          .append(first.getMethodName())
+          .append("(")
+          .append(first.getLineNumber())
+          .append(") - \"")
+          .append(t.getMessage())
+          .append("\"");
+
+        return SMPHookError.with(ErrorType.PROPAGATED, sb.toString());
     }
 
+    /**
+     * <p>Instantiates a {@link ErrorType#NULL_REFERENCE} {@code SMPHookError} instance with a detailed error message using the supplied {@code identifiers}.</p>
+     * 
+     * <p>If {@code identifiers} is empty, a simple error message is used.</p>
+     * 
+     * @param identifiers - the list of variables to display in the detailed error message
+     * @return a new <b>NULL_REFERENCE</b> {@code SMPHookError} instance
+     */
+    @SafeVarargs
+    public static SMPHookError nullReference(String... identifiers) {
+        String errMsg;
+
+        if (identifiers.length > 0) {
+            StringBuilder sb = new StringBuilder();
+            for (String identifier : identifiers) {
+                sb.append("'").append(identifier).append("', ");
+            }
+            sb.setLength(sb.length() - 2);
+            sb.append(" cannot be null.");
+            errMsg = sb.toString();
+        } else errMsg = "Null references disallowed.";
+
+        return SMPHookError.with(ErrorType.NULL_REFERENCE, errMsg);
+    }
+
+    /**
+     * <p>Instantiates a {@link ErrorType#GENERIC} {@code SMPHookError} instance with the supplied {@code message}.</p>
+     * 
+     * <p>If {@code message} is {@code null}, then an empty string is used.</p>
+     * 
+     * @param message - the string message to supply to this <b>GENERIC</b> error.
+     * @return a new <b>GENERIC</b> {@code SMPHookError} instance
+     */
+    public static SMPHookError withMessage(String message) {
+        return SMPHookError.with(ErrorType.GENERIC, message);
+    }
+
+    /**
+     * <p>Instantiates an instance of {@code SMPHookError} with the supplied error {@code type} and {@code message}.</p>
+     * 
+     * <p>If {@code type} is {@code null}, then the default {@link ErrorType#GENERIC} is used.</p>
+     * <p>If {@code message} is {@code null}, then an empty string is used./p>
+     * 
+     * @param type - the error type of this new {@code SMPHookError} instance
+     * @param message - the string message to supply to this new {@code SMPHookError} instance
+     * @return a new {@code SMPHookError} instance
+     */
+    public static SMPHookError with(ErrorType type, String message) {
+        return new SMPHookError(type, message);
+    }
+
+    private final ErrorType type;
     private final String message;
-    private final Type   type;
 
-    private SMPHookError(Type type, String message) {
-        this.type = type;
-        this.message = message;
+    private SMPHookError(ErrorType type, String message) {
+        this.type = Objects.requireNonNullElse(type, ErrorType.GENERIC);
+        this.message = Objects.requireNonNullElse(message, "");
     }
 
-    @Override
-    public String getMessage() {
-        return message;
-    }
-
-    /** @return the type of error that this instance is */
-    public Type getType() {
+    /** @return the type of {@code SMPHookError} this is */
+    public ErrorType getType() {
         return type;
     }
 
     @Override
+    public String getMessage() {
+        return String.format("(%s): %s", type, message);
+    }
+
+    @Override
     public int hashCode() {
-        return type.ordinal();
+        return Objects.hash(type, message);
     }
 
     @Override
     public boolean equals(Object obj) {
-        if (obj == this) return true;
-        SMPHookError asErr = (SMPHookError) obj;
-        return type == asErr.type && message.equals(asErr.message);
+        if (obj == null)                  return false;
+        if (obj == this)                  return true;
+        if (getClass() != obj.getClass()) return false;
+        SMPHookError asError = (SMPHookError) obj;
+        return type == asError.type && message.equals(asError.message);
     }
 
     @Override
     public String toString() {
-        return String.format("(%s): %s", type, message);
+        return String.format("SMPHookError[type: %s, message: \"%s\"]", type, message);
     }
 }
