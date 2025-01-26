@@ -103,7 +103,7 @@ public abstract sealed class JVMOption permits JVMOption.Enabled, JVMOption.Assi
         public boolean equals(Object obj) {
             if (!super.equals(obj)) return false;
             Enabled asOption = (Enabled) obj;
-            return option.equals(asOption.option) && enabled == asOption.enabled;
+            return enabled == asOption.enabled;
         }
 
         @Override
@@ -142,7 +142,7 @@ public abstract sealed class JVMOption permits JVMOption.Enabled, JVMOption.Assi
         public boolean equals(Object obj) {
             if (!super.equals(obj)) return false;
             Assigned asOption = (Assigned) obj;
-            return option.equals(asOption.option) && value.equals(asOption.value);
+            return value.equals(asOption.value);
         }
 
         @Override
