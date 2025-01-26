@@ -130,9 +130,6 @@ public final class ServerProcess {
      * @throws SMPHookError if the process is not running, or an {@link java.io.IOException} occurs
      */
     public void stop() throws SMPHookError {
-        if (!isRunning()) {
-            throw PROC_NOT_RUNNING_ERROR;
-        }
         rawInput("stop");
     }
 
