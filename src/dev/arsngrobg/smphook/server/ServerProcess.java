@@ -105,6 +105,8 @@ public final class ServerProcess {
 
     /**
      * <p>Reads out the next line that was output by the server in a First in First Out (FIFO) fashion.</p>
+     *
+     * <p>If the End Of File (EOF) character ({@value #EOF}) is returned by this method, the server is no longer prodoucing output (the server has finished running).</p>
      * 
      * @return the next line
      * @throws SMPHookError if the process is not running, or an {@link java.io.IOException} occurs
