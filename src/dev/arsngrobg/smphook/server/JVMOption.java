@@ -65,6 +65,8 @@ public abstract sealed class JVMOption permits JVMOption.Enabled, JVMOption.Assi
         return option;
     }
 
+    public abstract int hashCode();
+
     @Override
     public boolean equals(Object obj) {
         if (obj == null)                  return false;
@@ -73,6 +75,8 @@ public abstract sealed class JVMOption permits JVMOption.Enabled, JVMOption.Assi
         JVMOption asOption = (JVMOption) obj;
         return option.equals(asOption.option);
     }
+
+    public abstract String toString();
 
     /**
      * <p>A Java Virtual Machine (JVM) option with an additional enabled flag.</p>
