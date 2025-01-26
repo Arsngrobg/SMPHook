@@ -65,6 +65,15 @@ public abstract sealed class JVMOption permits JVMOption.Enabled, JVMOption.Assi
         return option;
     }
 
+    @Override
+    public boolean equals(Object obj) {
+        if (obj == null)                  return false;
+        if (obj == this)                  return true;
+        if (getClass() != obj.getClass()) return false;
+        JVMOption asOption = (JVMOption) obj;
+        return option.equals(asOption.option);
+    }
+
     /**
      * <p>A Java Virtual Machine (JVM) option with an additional enabled flag.</p>
      * 
@@ -92,9 +101,7 @@ public abstract sealed class JVMOption permits JVMOption.Enabled, JVMOption.Assi
 
         @Override
         public boolean equals(Object obj) {
-            if (obj == null)                  return false;
-            if (obj == this)                  return true;
-            if (getClass() != obj.getClass()) return false;
+            if (!super.equals(obj)) return false;
             Enabled asOption = (Enabled) obj;
             return option.equals(asOption.option) && enabled == asOption.enabled;
         }
@@ -133,9 +140,7 @@ public abstract sealed class JVMOption permits JVMOption.Enabled, JVMOption.Assi
 
         @Override
         public boolean equals(Object obj) {
-            if (obj == null)                  return false;
-            if (obj == this)                  return true;
-            if (getClass() != obj.getClass()) return false;
+            if (!super.equals(obj)) return false;
             Assigned asOption = (Assigned) obj;
             return option.equals(asOption.option) && value.equals(asOption.value);
         }
