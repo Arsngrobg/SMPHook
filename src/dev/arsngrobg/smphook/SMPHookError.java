@@ -40,7 +40,7 @@ public final class SMPHookError extends Error {
      * 
      * <p>To be used in conjunction with the {@link #caseThrow(Case...)} method.</p>
      * 
-     * <p>This {@link Case} DTO is designed to hold the condition in which needs to pass or else the error ({@code ifFalse}) is thrown.</p>
+     * <p>This {@link Case} DTO is designed to hold the condition in which needs to pass or else the error ({@code ifTrue}) is thrown.</p>
      * 
      * @param condition - a function to test
      * @param ifTrue - the error thrown if the {@code condition} test is {@code true}
