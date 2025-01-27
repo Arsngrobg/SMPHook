@@ -29,6 +29,8 @@ import static dev.arsngrobg.smphook.SMPHookError.condition;
  * 
  * @author Arsngrobg
  * @since  1.0
+ * @see    HeapArg
+ * @see    JVMOption
  */
 public final class ServerProcess {
     /** <p>The String that represents the End Of File (EOF) character output by the server when it has finished running.</p> */
