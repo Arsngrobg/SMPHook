@@ -80,6 +80,20 @@ public final class ServerProcess {
         this.options = Stream.of(options).filter(o -> o != null).toArray(JVMOption[]::new);
     }
 
+    /**
+     * <p>Initialises the server process. If it is already running, an {@link SMPHookError} will be thrown.</p>
+     * 
+     * <p>The server process is initiated in the directory provided by the {@code serverJar} file.</p>
+     * 
+     * <p>I/O operations can be performed on this object with {@link #rawInput(String)} and {@link #rawOutput}.
+     *    And the process can be terminated with either the {@link #stop()} or {@link #forceStop()}
+     * </p>
+     * 
+     * @param nogui - whether to display the pre-packaged GUI on creation
+     * @throws SMPHookError if the process cannot be started
+     * @see #rawInput(String)
+     * @see #rawOutput()
+     */
     public void init(boolean nogui) throws SMPHookError {
         if (isRunning()) {
             throw SMPHookError.with(ErrorType.IO, "Server process is already running.");
