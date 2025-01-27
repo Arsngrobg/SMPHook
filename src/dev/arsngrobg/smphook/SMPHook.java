@@ -28,7 +28,7 @@ public final class SMPHook {
         return String.format("%d.%d", VERSION_MAJOR, VERSION_MINOR);
     }
 
-    public static void main(String[] args) {
+    public static void main(String[] args) throws Exception {
         var arg = HeapArg.fromString("300G");
         System.out.println(arg);
 
@@ -39,7 +39,15 @@ public final class SMPHook {
 
         ServerProcess proc = new ServerProcess("smp\\server.jar", HeapArg.fromString("2G"), HeapArg.fromString("8G"));
         System.out.println(proc.getInitCommand());
+        System.out.println();
 
-        throw SMPHookError.nullReference("foo");
+        proc.init(false);
+
+        String line;
+        while (!(line = proc.rawOutput()).equals(ServerProcess.EOF)) {
+            System.out.printf("[Server] :: %s\n", line);
+        }
+
+        throw SMPHookError.nullReference("TEST ERROR CASE");
     }
 }

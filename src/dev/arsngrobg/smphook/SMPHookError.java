@@ -20,7 +20,7 @@ public final class SMPHookError extends Error {
     public static enum ErrorType {
         /** <p>The most basic error.</p> */
         GENERIC,
-        /** <p>An error caused by files.</p> */
+        /** <p>An error caused by failed file operations.</p> */
         FILE,
         /** <p>An error caused by failed I/O operations.</p> */
         IO,
@@ -116,6 +116,10 @@ public final class SMPHookError extends Error {
         if (identifiers.length > 0) {
             StringBuilder sb = new StringBuilder();
             for (String identifier : identifiers) {
+                if (identifier == null) {
+                    SMPHookError.nullReference("identifier");
+                }
+
                 sb.append("'").append(identifier).append("', ");
             }
             sb.setLength(sb.length() - 2);

@@ -4,6 +4,10 @@ import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.OutputStreamWriter;
+import java.util.Arrays;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Stream;
 
@@ -29,9 +33,6 @@ import static dev.arsngrobg.smphook.SMPHookError.condition;
 public final class ServerProcess {
     /** <p>The String that represents the End Of File (EOF) character output by the server when it has finished running.</p> */
     public static final String EOF = "\0";
-
-    // static reference to common error case
-    private static final SMPHookError PROC_NOT_RUNNING_ERROR = SMPHookError.with(ErrorType.IO, "Server process is not running.");
 
     // metadata
     private final File serverJar;
@@ -79,6 +80,39 @@ public final class ServerProcess {
         this.options = Stream.of(options).filter(o -> o != null).toArray(JVMOption[]::new);
     }
 
+    public void init(boolean nogui) throws SMPHookError {
+        if (isRunning()) {
+            throw SMPHookError.with(ErrorType.IO, "Server process is already running.");
+        }
+
+        String initCommand = getInitCommand();
+        if (nogui) {
+            initCommand = initCommand.concat(" nogui");
+        }
+        String[] commandTokens = initCommand.split("\\s+");
+
+        ProcessBuilder procBuilder = new ProcessBuilder(commandTokens);
+
+        File directory = serverJar.getParentFile();
+        if (directory != null) {
+            procBuilder.directory(directory);
+        }
+
+        try {
+            process = procBuilder.start();
+            istream = new BufferedWriter(new OutputStreamWriter(process.getOutputStream()));
+            ostream = new BufferedReader(new InputStreamReader(process.getInputStream()));
+
+            process.onExit().thenAccept(p -> {
+                process = null;
+                istream = null;
+                ostream = null;
+            });
+        } catch (IOException e) {
+            throw SMPHookError.withCause(e);
+        }
+    }
+
     /**
      * <p>Simulates the input you see in Minecraft: Java Edition, and processes the {@code command} as one complete command.
      *    Any escape characters are replaced with their literal equivalent (e.g. any {@code '\n'} are replaced as {@code '\\n'}).
@@ -89,7 +123,7 @@ public final class ServerProcess {
      */
     public void rawInput(String command) throws SMPHookError {
         if (!isRunning()) {
-            throw PROC_NOT_RUNNING_ERROR;
+            throw SMPHookError.with(ErrorType.IO, "Server process is not running.");
         }
 
         String cleanedCommand = command.replaceAll("\n", "\\n");
@@ -106,14 +140,14 @@ public final class ServerProcess {
     /**
      * <p>Reads out the next line that was output by the server in a First in First Out (FIFO) fashion.</p>
      *
-     * <p>If the End Of File (EOF) character ({@value #EOF}) is returned by this method, the server is no longer prodoucing output (the server has finished running).</p>
+     * <p>If the End Of File (EOF) character ({@code "\0"}) is returned by this method, the server is no longer prodoucing output (the server has finished running).</p>
      * 
      * @return the next line
      * @throws SMPHookError if the process is not running, or an {@link java.io.IOException} occurs
      */
     public String rawOutput() throws SMPHookError {
         if (!isRunning()) {
-            throw PROC_NOT_RUNNING_ERROR;
+            throw SMPHookError.with(ErrorType.IO, "Server process is not running.");
         }
 
         try {
@@ -142,7 +176,7 @@ public final class ServerProcess {
      */
     public void forceStop() throws SMPHookError {
         if (!isRunning()) {
-            throw PROC_NOT_RUNNING_ERROR;
+            throw SMPHookError.with(ErrorType.IO, "Server process is not running.");
         }
         process.destroyForcibly();
     }
@@ -173,7 +207,7 @@ public final class ServerProcess {
      */
     public long getPID() throws SMPHookError {
         if (!isRunning()) {
-            throw PROC_NOT_RUNNING_ERROR;
+            throw SMPHookError.with(ErrorType.IO, "Server process is not running.");
         }
         process.destroyForcibly();
         return process.pid();
@@ -181,7 +215,7 @@ public final class ServerProcess {
 
     /** @return the command that is used to initiate the server */
     public String getInitCommand() {
-        StringBuilder commandBuilder = new StringBuilder("java");
+        StringBuilder commandBuilder = new StringBuilder("java ");
         minHeap.ifPresent(min -> commandBuilder.append(min.toXms()).append(" "));
         maxHeap.ifPresent(max -> commandBuilder.append(max.toXmx()).append(" "));
 
@@ -211,5 +245,42 @@ public final class ServerProcess {
     /** @return the Java Virtual Machine (JVM) options used to customize this server process, can be <i>empty</i> */
     public JVMOption[] getOptions() {
         return options;
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(serverJar, minHeap, maxHeap, options);
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (obj == null)                  return false;
+        if (obj == this)                  return true;
+        if (getClass() != obj.getClass()) return false;
+        ServerProcess asProc = (ServerProcess) obj;
+        
+        // abort if min2 is null and min1 isnt
+        // abort if min1 is null and min2 isnt
+        // abort if min1 != min2
+
+        // either null
+        if (minHeap.isPresent() && asProc.minHeap.isEmpty() || minHeap.isEmpty() && asProc.minHeap.isPresent()) {
+            return false;
+        }
+
+        // not equal
+        else if (!minHeap.get().equals(asProc.minHeap.get())) {
+            return false;
+        }
+
+        return serverJar.equals(asProc.serverJar) && Arrays.equals(options, asProc.options);
+    }
+
+    @Override
+    public String toString() {
+        if (!isRunning()) {
+            return "ServerProcess[inactive]";
+        }
+        return String.format("ServerProcess[PID: %d]", getPID());
     }
 }
