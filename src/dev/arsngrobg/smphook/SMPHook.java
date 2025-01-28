@@ -1,5 +1,9 @@
 package dev.arsngrobg.smphook;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.CompletableFuture;
+
 import dev.arsngrobg.smphook.server.HeapArg;
 import dev.arsngrobg.smphook.server.JVMOption;
 import dev.arsngrobg.smphook.server.ServerProcess;
@@ -16,6 +20,43 @@ public final class SMPHook {
 
     /** <p>The minor version of <i>SMPHook</i>. This is incremented whenever minor (e.g. bug fixes, QOL) features are introduced.</p> */
     public static final int VERSION_MINOR = 0;
+
+    private static final List<Thread> workers = new ArrayList<>();
+
+    // functional interface that delegates exception handling to the worker thread and aborts if an exception occurs
+    @FunctionalInterface
+    private static interface Task {
+        void perform() throws Exception;
+    }
+
+    /**
+     * <p>Assigns a worker {@link Thread} to the given {@code task} function to be performed concurrently.</p>
+     * 
+     * <p>You can chain callback functions using the returned {@link CompletableFuture}.</p>
+     * 
+     * <p>The cleanup of workers are automatically handled by SMPHook.</p>
+     * 
+     * @param task - a task to perform concurrently
+     * @return a {@link CompletableFuture}
+     */
+    public static CompletableFuture<Thread> assignWorkerTo(Task task) {
+        int workerIdx = workers.size();
+        String workerID = String.format("Worker#%d", workerIdx);
+
+        CompletableFuture<Thread> future = new CompletableFuture<>();
+
+        Runnable wrapper = () -> {
+            try { task.perform(); } catch (Exception e) { SMPHookError.withCause(e); }
+            future.complete(Thread.currentThread());
+            workers.set(workerIdx, null);
+        };
+
+        Thread workerThread = Thread.ofVirtual().name(workerID).unstarted(wrapper);
+        workers.add(workerThread);
+        workerThread.start();
+
+        return future;
+    }
 
     /**
      * <p>Retrieves the string representation of the version as a string, consisting of the major and minor version numbers.</p>
@@ -43,6 +84,8 @@ public final class SMPHook {
 
         proc.init(false);
 
+        SMPHook.assignWorkerTo(() -> proc.rawInput("say Hello, World!")).thenAccept(t -> proc.rawInput("say FINISHED!"));
+
         String line;
         while (!(line = proc.rawOutput()).equals(ServerProcess.EOF)) {
             System.out.printf("[Server] :: %s\n", line);
@@ -50,4 +93,6 @@ public final class SMPHook {
 
         throw SMPHookError.nullReference("TEST ERROR CASE");
     }
+
+    private SMPHook() {}
 }

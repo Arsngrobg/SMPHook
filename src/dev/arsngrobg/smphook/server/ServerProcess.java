@@ -64,8 +64,7 @@ public final class ServerProcess {
      * @throws SMPHookError if {@code serverJar} is: {@code null}, doesn't exist, or not a file; the {@code minHeap} & {@code maxHeap} are mismatched
      */
     public ServerProcess(String serverJar, HeapArg minHeap, HeapArg maxHeap, JVMOption... options) throws SMPHookError {
-        try { this.serverJar = new File(serverJar); }
-        catch (NullPointerException e) { throw SMPHookError.withCause(e); }
+        try { this.serverJar = new File(serverJar); } catch (NullPointerException e) { throw SMPHookError.withCause(e); }
 
         SMPHookError.caseThrow(
             condition(() -> !this.serverJar.exists(), SMPHookError.with(ErrorType.FILE, "The serverJar provided does not exist.")),
