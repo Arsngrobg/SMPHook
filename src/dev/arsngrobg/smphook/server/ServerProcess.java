@@ -3,7 +3,6 @@ package dev.arsngrobg.smphook.server;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
-import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.util.Arrays;
@@ -66,6 +65,7 @@ public final class ServerProcess {
     public ServerProcess(String serverJar, HeapArg minHeap, HeapArg maxHeap, JVMOption... options) throws SMPHookError {
         try { this.serverJar = new File(serverJar); } catch (NullPointerException e) { throw SMPHookError.withCause(e); }
 
+        // TODO: validate based on server type
         SMPHookError.caseThrow(
             condition(() -> !this.serverJar.exists(), SMPHookError.with(ErrorType.FILE, "The serverJar provided does not exist.")),
             condition(() -> !this.serverJar.isFile(), SMPHookError.with(ErrorType.FILE, "The serverJar provided is not a file."))
@@ -113,7 +113,7 @@ public final class ServerProcess {
             procBuilder.directory(directory);
         }
 
-        try {
+        SMPHookError.throwIfFail(() -> {
             process = procBuilder.start();
             istream = new BufferedWriter(new OutputStreamWriter(process.getOutputStream()));
             ostream = new BufferedReader(new InputStreamReader(process.getInputStream()));
@@ -123,9 +123,7 @@ public final class ServerProcess {
                 istream = null;
                 ostream = null;
             });
-        } catch (IOException e) {
-            throw SMPHookError.withCause(e);
-        }
+        });
     }
 
     /**
@@ -143,13 +141,11 @@ public final class ServerProcess {
 
         String cleanedCommand = command.replaceAll("\n", "\\n");
 
-        try {
+        SMPHookError.throwIfFail(() -> {
             istream.write(cleanedCommand);
             istream.newLine();
             istream.flush();
-        } catch (IOException e) {
-            throw SMPHookError.withCause(e);
-        }
+        });
     }
 
     /**
@@ -165,12 +161,10 @@ public final class ServerProcess {
             throw SMPHookError.with(ErrorType.IO, "Server process is not running.");
         }
 
-        try {
+        return SMPHookError.throwIfFail(() -> {
             String line = ostream.readLine();
             return line == null ? EOF : line;
-        } catch (IOException e) {
-            throw SMPHookError.withCause(e);
-        }
+        });
     }
 
     /**

@@ -16,6 +16,18 @@ import java.util.function.Supplier;
  * @since  1.0
  */
 public final class SMPHookError extends Error {
+    /** <p>A simple function to test a block of code.</p> */
+    @FunctionalInterface
+    public static interface Test {
+        public void test() throws Exception;
+    }
+
+    /** <p>A function that executes the block of code, and returns a value of type {@code B} if success.</p> */
+    @FunctionalInterface
+    public static interface SupplyingTest<RETURN_TYPE> {
+        public RETURN_TYPE test() throws Exception;
+    }
+
     /** <p>Enumeration representing different types of errors.</p> */
     public static enum ErrorType {
         /** <p>The most basic error.</p> */
@@ -24,6 +36,8 @@ public final class SMPHookError extends Error {
         FILE,
         /** <p>An error caused by failed I/O operations.</p> */
         IO,
+        /** <p>An error caused by failed concurrency operations.</p> */
+        CONCURRENCY,
         /** <p>An error caused by a null reference.</p> */
         NULL_REFERENCE,
         /** <p>An error caused by the internal type wrapped by a wrapper type.</p> */
@@ -36,9 +50,19 @@ public final class SMPHookError extends Error {
     public static record Case(Supplier<Boolean> condition, SMPHookError ifTrue) {}
 
     /**
-     * <p>Constructs a Data Transfer Object (DTO) to be passed into the {@link #caseThrow(Case...)} method.</p>
+     * <p>A {@link #caseThrow(Case...)} case for {@code null} values.</p>
      * 
-     * <p>To be used in conjunction with the {@link #caseThrow(Case...)} method.</p>
+     * @param o - the object to test
+     * @param identifier - the identifier name to output if an error occurs
+     * @return a {@link Case} DTO
+     * @see #caseThrow(Case...)
+     */
+    public static SMPHookError.Case nullCase(Object o, String identifier) {
+        return condition(() -> o == null, SMPHookError.nullReference(identifier));
+    }
+
+    /**
+     * <p>Constructs a Data Transfer Object (DTO) to be passed into the {@link #caseThrow(Case...)} method.</p>
      * 
      * <p>This {@link Case} DTO is designed to hold the condition in which needs to pass or else the error ({@code ifTrue}) is thrown.</p>
      * 
@@ -49,9 +73,10 @@ public final class SMPHookError extends Error {
      * @see #caseThrow(Case...)
      */
     public static SMPHookError.Case condition(Supplier<Boolean> condition, SMPHookError ifTrue) throws SMPHookError {
-        if (condition == null) throw SMPHookError.nullReference("condition");
-        if (ifTrue == null) throw SMPHookError.nullReference("ifFalse");
-        return new Case(condition, ifTrue);
+        return new Case(
+            SMPHookError.requireNonNull(condition),
+            SMPHookError.requireNonNull(ifTrue)
+        );
     }
 
     /**
@@ -74,6 +99,35 @@ public final class SMPHookError extends Error {
     }
 
     /**
+     * <p>Executes the supplied test ({@code t}) code block.</p>
+     * 
+     * <p>A <b>PROPOGATED</b> {@code SMPHookError} is thrown if this test fails.</p>
+     * 
+     * @param t - the test to check for thrown exceptions
+     * @throws SMPHookError if an exception was thrown by the test ({@code t})
+     */
+    public static void throwIfFail(Test t) throws SMPHookError {
+        SMPHookError.requireNonNull(t);
+
+        try { t.test(); } catch (Exception e) { throw SMPHookError.withCause(e); }
+    }
+
+    /**
+     * <p>Executes the supplied test ({@code t}) code block, and returns the value of type {@code RETURN_TYPE}.</p>
+     * 
+     * <p>A <b>PROPOGATED</b> {@code SMPHookError} is thrown if this test fails.</p>
+     * 
+     * @param <RETURN_TYPE> - the type that the test ({@code t}) returns
+     * @param t - the test to check for thrown exceptions
+     * @throws SMPHookError if an exception was thrown by the test ({@code t})
+     */
+    public static <RETURN_TYPE> RETURN_TYPE throwIfFail(SupplyingTest<RETURN_TYPE> t) throws SMPHookError {
+        SMPHookError.requireNonNull(t);
+
+        try { return t.test(); } catch (Exception e) { throw SMPHookError.withCause(e); }
+    }
+
+    /**
      * <p>Instantiates a {@link ErrorType#PROPAGATED} {@code SMPHookError} instance with a detailed error message,
      *    including the {@code .java} file and line number this occurred in and the message (if provided).
      * </p>
@@ -83,7 +137,7 @@ public final class SMPHookError extends Error {
      * @throws SMPHookError if t is {@code null}
      */
     public static SMPHookError withCause(Throwable t) throws SMPHookError {
-        if (t == null) SMPHookError.nullReference("t");
+        SMPHookError.requireNonNull(t);
 
         StringBuilder sb = new StringBuilder();
 
@@ -102,6 +156,42 @@ public final class SMPHookError extends Error {
     }
 
     /**
+     * <p>Checks to see if the {@code obj} is {@code null}.
+     *    If that is the case, then an {@code SMPHookError} is thrown.
+     * </p>
+     * 
+     * @param <T> - the type of object that is passed to this method
+     * @param obj - the object to check for {@code null} safety
+     * @return the {@code obj} for optional chaining
+     * @throws SMPHookError if the {@code obj} is {@code null}
+     */
+    public static <T> T requireNonNull(T obj) throws SMPHookError {
+        if (obj == null) {
+            throw SMPHookError.nullReference("obj");
+        }
+
+        return obj;
+    }
+
+    /**
+     * <p>Checks to see if the {@code obj} is {@code null}.
+     *    If that is the case, then the {@code alt} is returned.
+     * </p>
+     * 
+     * @param <T> - the type of object that is passed to this method
+     * @param obj - the object to check for {@code null} safety
+     * @param alt - the object to return if {@code obj} is {@code null}
+     * @return the {@code obj} or {@code alt}
+     */
+    public static <T> T requireNonNull(T obj, T alt) {
+        if (obj == null) {
+            return SMPHookError.requireNonNull(alt);
+        }
+
+        return SMPHookError.requireNonNull(obj);
+    }
+
+    /**
      * <p>Instantiates a {@link ErrorType#NULL_REFERENCE} {@code SMPHookError} instance with a detailed error message using the supplied {@code identifiers}.</p>
      * 
      * <p>If {@code identifiers} is empty, a simple error message is used.</p>
@@ -116,11 +206,7 @@ public final class SMPHookError extends Error {
         if (identifiers.length > 0) {
             StringBuilder sb = new StringBuilder();
             for (String identifier : identifiers) {
-                if (identifier == null) {
-                    SMPHookError.nullReference("identifier");
-                }
-
-                sb.append("'").append(identifier).append("', ");
+                sb.append("'").append(SMPHookError.requireNonNull(identifier)).append("', ");
             }
             sb.setLength(sb.length() - 2);
             sb.append(" cannot be null.");
@@ -160,8 +246,8 @@ public final class SMPHookError extends Error {
     private final String message;
 
     private SMPHookError(ErrorType type, String message) {
-        this.type = Objects.requireNonNullElse(type, ErrorType.GENERIC);
-        this.message = Objects.requireNonNullElse(message, "");
+        this.type    = SMPHookError.requireNonNull(type, ErrorType.GENERIC);
+        this.message = SMPHookError.requireNonNull(message, "");
     }
 
     /** @return the type of {@code SMPHookError} this is */
