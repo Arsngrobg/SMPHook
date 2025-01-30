@@ -93,6 +93,7 @@ public final class SMPHookError extends Error {
     @SafeVarargs
     public static void caseThrow(SMPHookError.Case... cases) throws SMPHookError {
         for (Case c : cases) {
+            SMPHookError.requireNonNull(c, "c");
             boolean isTrue = c.condition.get();
             if (isTrue) throw c.ifTrue;
         }
@@ -157,24 +158,6 @@ public final class SMPHookError extends Error {
 
     /**
      * <p>Checks to see if the {@code obj} is {@code null}.
-     *    If that is the case, then an {@code SMPHookError} is thrown.
-     * </p>
-     * 
-     * @param <T> - the type of object that is passed to this method
-     * @param obj - the object to check for {@code null} safety
-     * @return the {@code obj} for optional chaining
-     * @throws SMPHookError if the {@code obj} is {@code null}
-     */
-    public static <T> T requireNonNull(T obj) throws SMPHookError {
-        if (obj == null) {
-            throw SMPHookError.nullReference("obj");
-        }
-
-        return obj;
-    }
-
-    /**
-     * <p>Checks to see if the {@code obj} is {@code null}.
      *    If that is the case, then the {@code alt} is returned.
      * </p>
      * 
@@ -189,6 +172,24 @@ public final class SMPHookError extends Error {
         }
 
         return SMPHookError.requireNonNull(obj);
+    }
+
+    /**
+     * <p>Checks to see if the {@code obj} is {@code null}.
+     *    If that is the case, then an {@code SMPHookError} is thrown.
+     * </p>
+     * 
+     * @param <T> - the type of object that is passed to this method
+     * @param obj - the object to check for {@code null} safety
+     * @return the {@code obj} for optional chaining
+     * @throws SMPHookError if the {@code obj} is {@code null}
+     */
+    public static <T> T requireNonNull(T obj) throws SMPHookError {
+        if (obj == null) {
+            throw SMPHookError.nullReference("obj");
+        }
+
+        return obj;
     }
 
     /**
