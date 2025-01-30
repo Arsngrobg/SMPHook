@@ -56,8 +56,7 @@ public abstract sealed class JVMOption permits JVMOption.Enabled, JVMOption.Assi
 
     // base constructor
     protected JVMOption(String option) throws SMPHookError {
-        if (option == null) throw SMPHookError.nullReference("option");
-        this.option = option;
+        this.option = SMPHookError.requireNonNull(option, "option");;
     }
 
     /** @return the option string of this JVM option */
@@ -128,8 +127,7 @@ public abstract sealed class JVMOption permits JVMOption.Enabled, JVMOption.Assi
 
         private Assigned(String option, String value) throws SMPHookError {
             super(option);
-            if (value == null) throw SMPHookError.nullReference("value");
-            this.value = value;
+            this.value = SMPHookError.requireNonNull(value, "value");
         }
 
         /** @return the value that this JVM option is assigned to */
