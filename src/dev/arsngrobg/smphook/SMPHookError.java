@@ -47,7 +47,7 @@ public final class SMPHookError extends Error {
     }
 
     /** <p>A simple Data Tranfer Object (DTO) for a condition case used in {@link #caseThrow(Case...)}</p> */
-    public static record Case(Supplier<Boolean> condition, SMPHookError ifTrue) {}
+    public record Case(Supplier<Boolean> condition, SMPHookError ifTrue) {}
 
     /**
      * <p>A {@link #caseThrow(Case...)} case for {@code null} values.</p>
