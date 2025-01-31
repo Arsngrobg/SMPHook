@@ -93,7 +93,7 @@ public final class SMPHookError extends Error {
     @SafeVarargs
     public static void caseThrow(SMPHookError.Case... cases) throws SMPHookError {
         for (Case c : cases) {
-            SMPHookError.requireNonNull(c, "c");
+            SMPHookError.requireNonNull(c);
             boolean isTrue = c.condition.get();
             if (isTrue) throw c.ifTrue;
         }
