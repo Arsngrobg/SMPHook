@@ -4,6 +4,9 @@ import dev.arsngrobg.smphook.SMPHookError;
 import dev.arsngrobg.smphook.SMPHookError.ErrorType;
 import static dev.arsngrobg.smphook.SMPHookError.condition;
 
+import java.util.ArrayList;
+import java.util.List;
+
 /**
  * <p>A {@code Worker} is a wrapper type for a {@link java.lang.Thread} instance (which is virtual).</p>
  * 
@@ -38,7 +41,7 @@ public final class Worker {
             SMPHookError.consumeException(t::execute);
         };
 
-        return Worker.ofStarted(wrapper);
+        return Worker.started(wrapper);
     }
 
     /**
@@ -48,8 +51,8 @@ public final class Worker {
      * @return a {@code Worker} instance that is executing
      * @throws SMPHookError if {@code t} is {@code null}
      */
-    public static Worker ofStarted(Task t) throws SMPHookError {
-        Worker worker = Worker.ofUnstarted(t);
+    public static Worker started(Task t) throws SMPHookError {
+        Worker worker = Worker.unstarted(t);
         worker.start();
         return worker;
     }
@@ -61,11 +64,17 @@ public final class Worker {
      * @return a {@code Worker} instance ready to execute
      * @throws SMPHookError if {@code t} is {@code null}
      */
-    public static Worker ofUnstarted(Task t) throws SMPHookError {
+    public static Worker unstarted(Task t) throws SMPHookError {
         SMPHookError.requireNonNull(t);
 
+        Worker worker = null;
+
+        @SuppressWarnings("null") // this is never executed until atleast after a worker has been supplied with it
         Runnable wrapper = () -> {
             SMPHookError.consumeException(t::execute);
+            for (Worker child : worker.children) {
+                child.start();
+            }
         };
 
         int workerID = nextWorkerID++;
@@ -79,6 +88,8 @@ public final class Worker {
     private final Thread thread;
     private final int ID;
 
+    private final List<Worker> children = new ArrayList<>();
+
     private Worker(Thread thread, int ID) throws SMPHookError {
         if (!SMPHookError.requireNonNull(thread).isVirtual()) { // more of a dev assertion just to make sure I'm not being stupid
             throw SMPHookError.with(ErrorType.CONCURRENCY, "Worker thread supplied is not a virtual thread.");
@@ -86,6 +97,19 @@ public final class Worker {
 
         this.thread = thread;
         this.ID = ID;
+    }
+
+    /**
+     * <p>Creates a child worker ready to execute the supplied task {@code t} when its parent has finished executing.</p>
+     * 
+     * @param t - the task for a child {@code Worker} to execute
+     * @return a child {@code Worker}
+     * @throws SMPHookError if {@code t} is {@code null}
+     */
+    public Worker after(Task t) throws SMPHookError {
+        Worker child = Worker.unstarted(t);
+        children.add(child);
+        return child;
     }
 
     /**
