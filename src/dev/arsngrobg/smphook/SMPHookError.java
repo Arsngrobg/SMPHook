@@ -10,7 +10,7 @@ import java.util.function.Supplier;
  * 
  * <p>See {@link SMPHookError.ErrorType} for the various supported error types for an {@code SMPHookError}.</p>
  * 
- * <p>It extends the {@link java.lang.Error} class, so it is said that any unusual state is considered un-recoverable.</p>
+ * <p>It extends the {@link java.lang.Error} class, so it is said that any unusual or illegal state is considered un-recoverable.</p>
  * 
  * @author Arsngrobg
  * @since  1.0
@@ -97,6 +97,19 @@ public final class SMPHookError extends Error {
             boolean isTrue = c.condition.get();
             if (isTrue) throw c.ifTrue;
         }
+    }
+
+    /**
+     * <p>Executes the supplied test ({@code t} code block.</p>
+     * 
+     * <p>Upon a thrown {@link Exception}, it will be consumed (ignored).</p>
+     * 
+     * @param t - the test to execute
+     */
+    public static void consumeException(Test t) {
+        SMPHookError.requireNonNull(t);
+
+        try { t.test(); } catch (Exception ignored) {}
     }
 
     /**
