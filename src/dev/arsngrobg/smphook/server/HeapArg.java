@@ -29,7 +29,7 @@ public final class HeapArg implements Comparable<HeapArg> {
      * @throws SMPHookError if the supplied {@code argStr} is {@code null} or does not match the expected pattern for a {@code HeapArg} string 
      */
     public static HeapArg fromString(String argStr) throws SMPHookError {
-        if (argStr == null) throw SMPHookError.nullReference("argStr");
+        SMPHookError.requireNonNull(argStr);
 
         if (argStr.matches(ALLNUM_REGEX)) {
             long bytes = Long.parseLong(argStr);
