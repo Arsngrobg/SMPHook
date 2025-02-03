@@ -1,6 +1,11 @@
 package dev.arsngrobg.smphook;
 
+import java.util.Scanner;
+
 import dev.arsngrobg.smphook.concurrent.Worker;
+import dev.arsngrobg.smphook.server.HeapArg;
+import dev.arsngrobg.smphook.server.JVMOption;
+import dev.arsngrobg.smphook.server.ServerProcess;
 
 /**
  * <p>The main program.</p>
@@ -27,34 +32,35 @@ public final class SMPHook {
     }
 
     public static void main(String[] args) {
-        // var arg = HeapArg.fromString("300G");
-        // System.out.println(arg);
+        var arg = HeapArg.fromString("300G");
+        System.out.println(arg);
 
-        // System.out.println(JVMOption.enabled("UnlockExperimentalVMOptions"));
-        // System.out.println(JVMOption.enabled("UseG1GC"));
-        // System.out.println(JVMOption.disabled("UseG1GC"));
-        // System.out.println(JVMOption.assigned("G1NewSizePercent", "20"));
+        System.out.println(JVMOption.enabled("UnlockExperimentalVMOptions"));
+        System.out.println(JVMOption.enabled("UseG1GC"));
+        System.out.println(JVMOption.disabled("UseG1GC"));
+        System.out.println(JVMOption.assigned("G1NewSizePercent", "20"));
 
-        // ServerProcess proc = new ServerProcess("smp\\server.jar", HeapArg.fromString("2G"), HeapArg.fromString("8G"));
-        // System.out.println(proc.getInitCommand());
-        // System.out.println();
+        ServerProcess proc = new ServerProcess("smp\\server.jar", HeapArg.fromString("2G"), HeapArg.fromString("8G"));
+        System.out.println(proc.getInitCommand());
+        System.out.println();
 
-        // proc.init(false);
+        proc.init(false);
 
-        // String line;
-        // while (!(line = proc.rawOutput()).equals(ServerProcess.EOF)) {
-        //     System.out.printf("[Server] :: %s\n", line);
-        // }
-
-        // throw SMPHookError.nullReference("TEST ERROR CASE");
-
-        Worker w = Worker.ofWorking(() -> {
-            System.out.println("I AM WORKING!");
+        Worker.ofWorking(() -> {
+            try (Scanner scanner = new Scanner(System.in)) {
+                while (proc.isRunning()) {
+                    String command = scanner.nextLine();
+                    proc.rawInput(command);
+                }
+            }
         });
-        //w.start();
-        System.out.println(w);
 
-        SMPHookError.consumeException(() -> Thread.sleep(3000));
+        String line;
+        while (!(line = proc.rawOutput()).equals(ServerProcess.EOF)) {
+            System.out.printf("[Server] :: %s\n", line);
+        }
+
+        throw SMPHookError.nullReference("TEST ERROR CASE");
     }
 
     private SMPHook() {}

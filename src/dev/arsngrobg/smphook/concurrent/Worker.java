@@ -4,13 +4,14 @@ import dev.arsngrobg.smphook.SMPHookError;
 import dev.arsngrobg.smphook.SMPHookError.ErrorType;
 import static dev.arsngrobg.smphook.SMPHookError.condition;
 
-import dev.arsngrobg.smphook.SMPHook;
-
 /**
- * <p>A {@code Worker} is a wrapper type for a virtual {@link java.lang.Thread}.
- *    Due to the fact that the threads executed by {@code Worker}'s are <b>virtual</b>, they do not hang after JVM shutdown.
+ * <p>A {@code Worker} is a wrapper type for a {@link java.lang.Thread}.
+ *    The {@code Worker} class is designed to handle small jobs that do not require constant use of resource and CPU time, hence all worker threads are <i>virtual</i>.
+ *    Due to the fact that the threads executed by {@code Worker}'s are <i>virtual</i>, they do not hang after JVM shutdown.
  *    On instantiation, the {@code Worker} is assigned a unique ID for the current SMPHook instance, and this is based on instance order.
  * </p>
+ * 
+ * <p>Workers do not hang after the Main thread has finished executing (as the threads are inherintly virtual).</p>
  * 
  * <p>It is repsonsible for executing a given {@link Task}, which can be started and stopped using {@link #start()} and {@link #stop()} respectively.
  *    A worker can be in one of three states: <b>WAITING</b>, <b>WORKING</b>, and <b>FINISHED</b>.
@@ -21,6 +22,9 @@ import dev.arsngrobg.smphook.SMPHook;
  * 
  * @author Arsngrobg
  * @since  1.0
+ * @see    Worker#ofWorking(Task)
+ * @see    Worker#ofWaiting(Task)
+ * @see    Worker#ofFuture(Task, long)
  * @see    Task
  */
 public final class Worker {
@@ -40,7 +44,7 @@ public final class Worker {
             SMPHookError.consumeException(t::execute);
         };
 
-        return ofWorking(wrapper);
+        return Worker.ofWorking(wrapper);
     }
 
     /**
@@ -71,12 +75,13 @@ public final class Worker {
             SMPHookError.consumeException(t::execute);
         };
 
-        String workerThreadName = String.format("THREAD | Worker#%d", nextWorkerID);
+        String workerThreadName = String.format("VIRTUAL_THREAD | Worker#%d", nextWorkerID);
         Thread workerThread = Thread.ofVirtual().name(workerThreadName).unstarted(wrapper);
 
         return new Worker(workerThread);
     }
 
+    // each ID of a worker is the subsequent integer after the last one - simple but there is a very narrow case where they are equal
     private static int nextWorkerID = 0;
 
     private final int ID = nextWorkerID++;
@@ -88,7 +93,6 @@ public final class Worker {
         }
 
         this.thread = thread;
-        System.out.println(thread.getState());
     }
 
     /**
