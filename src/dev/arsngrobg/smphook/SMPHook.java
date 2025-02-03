@@ -44,16 +44,16 @@ public final class SMPHook {
         System.out.println(proc.getInitCommand());
         System.out.println();
 
-        proc.init(false);
+        //proc.init(false);
 
-        Worker.ofWorking(() -> {
+        System.out.println(Worker.ofFuture(() -> {
             try (Scanner scanner = new Scanner(System.in)) {
                 while (proc.isRunning()) {
                     String command = scanner.nextLine();
                     proc.rawInput(command);
                 }
             }
-        });
+        }, 1000));
 
         String line;
         while (!(line = proc.rawOutput()).equals(ServerProcess.EOF)) {

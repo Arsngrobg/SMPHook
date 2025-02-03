@@ -4,6 +4,11 @@ import dev.arsngrobg.smphook.SMPHookError;
 import dev.arsngrobg.smphook.SMPHookError.ErrorType;
 import static dev.arsngrobg.smphook.SMPHookError.condition;
 
+import java.util.stream.Stream;
+
+// TODO: maintain a set of Workers that can be queried
+// TODO: handle exception caused by Task
+
 /**
  * <p>A {@code Worker} is a wrapper type for a {@link java.lang.Thread}.
  *    The {@code Worker} class is designed to handle small jobs that do not require constant use of resource and CPU time, hence all worker threads are <i>virtual</i>.
@@ -71,14 +76,19 @@ public final class Worker {
         SMPHookError.requireNonNull(t);
 
         Runnable wrapper = () -> {
-            // atm we do nothing to the exception thrown by tasks (TODO)
             SMPHookError.consumeException(t::execute);
         };
+
+        StackTraceElement[] stacktrace = Stream.of(Thread.currentThread().getStackTrace())
+                                               .filter(e -> !e.getFileName().equals("Worker.java"))
+                                               .toArray(StackTraceElement[]::new);
+        String callerClassName = stacktrace[1].getClassName(); // element 0 is Thread.currentThread().getStackTrace() StackTraceElement
+        Class<?> caller = SMPHookError.throwIfFail(() -> Class.forName(callerClassName));
 
         String workerThreadName = String.format("VIRTUAL_THREAD | Worker#%d", nextWorkerID);
         Thread workerThread = Thread.ofVirtual().name(workerThreadName).unstarted(wrapper);
 
-        return new Worker(workerThread);
+        return new Worker(workerThread, caller);
     }
 
     // each ID of a worker is the subsequent integer after the last one - simple but there is a very narrow case where they are equal
@@ -86,13 +96,15 @@ public final class Worker {
 
     private final int ID = nextWorkerID++;
     private final Thread thread;
+    private final Class<?> caller;
 
-    private Worker(Thread thread) throws SMPHookError {
+    private Worker(Thread thread, Class<?> caller) throws SMPHookError {
         if (!SMPHookError.requireNonNull(thread).isVirtual()) { // dev assertion
             throw SMPHookError.with(ErrorType.CONCURRENCY, "The supplied worker thread is not a virtual thread.");
         }
 
         this.thread = thread;
+        this.caller = SMPHookError.requireNonNull(caller);
     }
 
     /**
@@ -160,6 +172,13 @@ public final class Worker {
     }
 
     /**
+     * @return the class that invoked this {@code Worker} instance
+     */
+    public Class<?> getCaller() {
+        return caller;
+    }
+
+    /**
      * <p>{@code Worker} IDs are not related to the task they are given, but determined by the order they are instanced.</p>
      * 
      * @return the unique ID for this worker in this instance of the SMPHook system.
@@ -184,6 +203,10 @@ public final class Worker {
 
     @Override
     public String toString() {
-        return String.format("Worker#%d", ID);
+        String callerName = caller.getSimpleName();
+        if (!callerName.equals("SMPHook")) {
+            callerName = "SMPHook.".concat(callerName);
+        }
+        return String.format("%s <- Worker#%d", callerName, ID);
     }
 }
