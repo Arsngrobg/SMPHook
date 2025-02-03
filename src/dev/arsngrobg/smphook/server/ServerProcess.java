@@ -30,6 +30,7 @@ import static dev.arsngrobg.smphook.SMPHookError.condition;
  * @since  1.0
  * @see    HeapArg
  * @see    JVMOption
+ * @see    MinecraftServer
  */
 public final class ServerProcess {
     /** <p>The String that represents the End Of File (EOF) character output by the server when it has finished running.</p> */
@@ -63,9 +64,7 @@ public final class ServerProcess {
      * @throws SMPHookError if {@code serverJar} is: {@code null}, doesn't exist, or not a file; the {@code minHeap} & {@code maxHeap} are mismatched
      */
     public ServerProcess(String serverJar, HeapArg minHeap, HeapArg maxHeap, JVMOption... options) throws SMPHookError {
-        try { this.serverJar = new File(serverJar); } catch (NullPointerException e) { throw SMPHookError.withCause(e); }
-
-        // TODO: validate based on server type
+        this.serverJar = SMPHookError.throwIfFail(() -> new File(serverJar));
         SMPHookError.caseThrow(
             condition(() -> !this.serverJar.exists(), SMPHookError.with(ErrorType.FILE, "The serverJar provided does not exist.")),
             condition(() -> !this.serverJar.isFile(), SMPHookError.with(ErrorType.FILE, "The serverJar provided is not a file."))

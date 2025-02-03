@@ -6,9 +6,6 @@ import static dev.arsngrobg.smphook.SMPHookError.condition;
 
 import java.util.stream.Stream;
 
-// TODO: maintain a set of Workers that can be queried
-// TODO: handle exception caused by Task
-
 /**
  * <p>A {@code Worker} is a wrapper type for a {@link java.lang.Thread}.
  *    The {@code Worker} class is designed to handle small jobs that do not require constant use of resource and CPU time, hence all worker threads are <i>virtual</i>.

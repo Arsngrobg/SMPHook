@@ -32,35 +32,38 @@ public final class SMPHook {
     }
 
     public static void main(String[] args) {
-        var arg = HeapArg.fromString("300G");
-        System.out.println(arg);
+        // example server parameters
+        String entryPoint = "smp\\server.jar";
+        HeapArg minHeap = HeapArg.fromString("2G");
+        HeapArg maxHeap = HeapArg.fromString("10G");
+        JVMOption[] options = {
+            JVMOption.enabled("UnlockExperimentalVMOptions"),
+            JVMOption.enabled("UseG1GC"),
+            JVMOption.assigned("G1NewSizePercent", "20"),
+            JVMOption.assigned("G1ReservePercent", "20"),
+            JVMOption.assigned("MaxGCPauseMillis", "50"),
+            JVMOption.assigned("G1HeapRegionSize", "32M")
+        };
 
-        System.out.println(JVMOption.enabled("UnlockExperimentalVMOptions"));
-        System.out.println(JVMOption.enabled("UseG1GC"));
-        System.out.println(JVMOption.disabled("UseG1GC"));
-        System.out.println(JVMOption.assigned("G1NewSizePercent", "20"));
+        ServerProcess proc = new ServerProcess(entryPoint, minHeap, maxHeap, options);
 
-        ServerProcess proc = new ServerProcess("smp\\server.jar", HeapArg.fromString("2G"), HeapArg.fromString("8G"));
-        System.out.println(proc.getInitCommand());
-        System.out.println();
-
-        //proc.init(false);
-
-        System.out.println(Worker.ofFuture(() -> {
+        Worker w = Worker.ofWaiting(() -> {
             try (Scanner scanner = new Scanner(System.in)) {
                 while (proc.isRunning()) {
                     String command = scanner.nextLine();
                     proc.rawInput(command);
                 }
             }
-        }, 1000));
+        });
+
+        proc.init(false);
+
+        w.start();
 
         String line;
         while (!(line = proc.rawOutput()).equals(ServerProcess.EOF)) {
             System.out.printf("[Server] :: %s\n", line);
         }
-
-        throw SMPHookError.nullReference("TEST ERROR CASE");
     }
 
     private SMPHook() {}

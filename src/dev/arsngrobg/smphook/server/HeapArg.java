@@ -5,6 +5,7 @@ import java.util.stream.Stream;
 
 import dev.arsngrobg.smphook.SMPHookError;
 import static dev.arsngrobg.smphook.SMPHookError.condition;
+import static dev.arsngrobg.smphook.SMPHookError.nullCase;
 
 /**
  * <p>The {@code HeapArg} object represents a Java Virtual Machine (JVM) heap allocation argument.</p>
@@ -62,7 +63,7 @@ public final class HeapArg implements Comparable<HeapArg> {
     public HeapArg(long size, Unit unit) throws SMPHookError {
         SMPHookError.caseThrow(
             condition(() -> size <= 0, SMPHookError.withMessage("size needs to be an unsigned, non-zero integer.")),
-            condition(() -> unit == null, SMPHookError.nullReference("unit"))
+            nullCase(unit, "unit")
         );
 
         this.size = size;
