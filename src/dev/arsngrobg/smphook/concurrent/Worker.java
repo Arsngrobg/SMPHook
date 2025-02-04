@@ -150,12 +150,13 @@ public final class Worker {
     /**
      * <p>Attaches a child {@code Worker} to this parent worker.</p>
      * 
-     * <p>The child worker will be invoked</p>
+     * <p>The child worker will be invoked after the parent has finished executing.</p>
      * 
-     * @param t
-     * @return
+     * @param t - the task that is executed after the execution of this worker's current task
+     * @return a new {@code Worker} instance (can be used for chaining)
+     * @throws SMPHookError if {@code t} is {@code null}
      */
-    public Worker then(Task t) {
+    public Worker then(Task t) throws SMPHookError {
         child = Optional.of(Worker.ofWaiting(t));
         if (isFinished()) {
             child.get().start();
