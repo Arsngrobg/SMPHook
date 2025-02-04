@@ -4,6 +4,8 @@ import dev.arsngrobg.smphook.SMPHookError;
 import dev.arsngrobg.smphook.SMPHookError.ErrorType;
 import static dev.arsngrobg.smphook.SMPHookError.condition;
 
+import java.util.Optional;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Stream;
 
 /**
@@ -72,8 +74,12 @@ public final class Worker {
     public static Worker ofWaiting(Task t) throws SMPHookError {
         SMPHookError.requireNonNull(t);
 
+        Worker worker = null;
+        AtomicReference<Worker> workerRef = new AtomicReference<>();
+
         Runnable wrapper = () -> {
             SMPHookError.consumeException(t::execute);
+            workerRef.get().initChild();
         };
 
         StackTraceElement[] stacktrace = Stream.of(Thread.currentThread().getStackTrace())
@@ -85,7 +91,9 @@ public final class Worker {
         String workerThreadName = String.format("VIRTUAL_THREAD | Worker#%d", nextWorkerID);
         Thread workerThread = Thread.ofVirtual().name(workerThreadName).unstarted(wrapper);
 
-        return new Worker(workerThread, caller);
+        worker = new Worker(workerThread, caller);
+        workerRef.set(worker);
+        return worker;
     }
 
     // each ID of a worker is the subsequent integer after the last one - simple but there is a very narrow case where they are equal
@@ -94,6 +102,8 @@ public final class Worker {
     private final int ID = nextWorkerID++;
     private final Thread thread;
     private final Class<?> caller;
+
+    private Optional<Worker> child = Optional.empty();
 
     private Worker(Thread thread, Class<?> caller) throws SMPHookError {
         if (!SMPHookError.requireNonNull(thread).isVirtual()) { // dev assertion
@@ -133,6 +143,33 @@ public final class Worker {
         if (!thread.isInterrupted()) {
             SMPHookError.with(ErrorType.CONCURRENCY, "Worker thread could not be interrupted for an unkown reason.");
         }
+
+        initChild();
+    }
+
+    /**
+     * <p>Attaches a child {@code Worker} to this parent worker.</p>
+     * 
+     * <p>The child worker will be invoked</p>
+     * 
+     * @param t
+     * @return
+     */
+    public Worker then(Task t) {
+        child = Optional.of(Worker.ofWaiting(t));
+        if (isFinished()) {
+            child.get().start();
+        }
+
+        return child.get();
+    }
+
+    private void initChild() {
+        child.ifPresent(c -> {
+            if (c.isWaiting()) {
+                c.start();
+            }
+        });
     }
 
     /**

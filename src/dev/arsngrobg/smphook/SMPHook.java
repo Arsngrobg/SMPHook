@@ -46,6 +46,7 @@ public final class SMPHook {
         };
 
         ServerProcess proc = new ServerProcess(entryPoint, minHeap, maxHeap, options);
+        System.out.printf("Running Minecraft Server Process with command: %s\n", proc.getInitCommand());
 
         Worker w = Worker.ofWaiting(() -> {
             try (Scanner scanner = new Scanner(System.in)) {
@@ -56,7 +57,7 @@ public final class SMPHook {
             }
         });
 
-        proc.init(false);
+        proc.init(true);
 
         w.start();
 

@@ -231,7 +231,7 @@ public final class ServerProcess {
             commandBuilder.append(option).append(" ");
         }
 
-        commandBuilder.append("-jar ").append(serverJar.getName());
+        commandBuilder.append("-server -jar ").append(serverJar.getName());
         return commandBuilder.toString();
     }
 
