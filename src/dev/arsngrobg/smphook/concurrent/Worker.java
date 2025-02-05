@@ -85,7 +85,7 @@ public final class Worker {
         StackTraceElement[] stacktrace = Stream.of(Thread.currentThread().getStackTrace())
                                                .filter(e -> !e.getFileName().equals("Worker.java"))
                                                .toArray(StackTraceElement[]::new);
-        String callerClassName = stacktrace[1].getClassName(); // element 0 is Thread.currentThread().getStackTrace() StackTraceElement
+        String callerClassName = stacktrace[1].getClassName(); // element 0 is Thread.currentThread().getStackTrace()
         Class<?> caller = SMPHookError.throwIfFail(() -> Class.forName(callerClassName));
 
         String workerThreadName = String.format("VIRTUAL_THREAD | Worker#%d", nextWorkerID);

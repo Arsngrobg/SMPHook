@@ -64,7 +64,7 @@ public final class SMPHook {
         String line;
         while (!(line = proc.rawOutput()).equals(ServerProcess.EOF)) {
             System.out.printf("[Server] :: %s\n", line);
-        }
+        }   
     }
 
     private SMPHook() {}

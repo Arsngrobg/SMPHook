@@ -22,7 +22,7 @@ public final class SMPHookError extends Error {
         public void test() throws Exception;
     }
 
-    /** <p>A function that executes the block of code, and returns a value of type {@code B} if success.</p> */
+    /** <p>A function that executes the block of code, and returns a value of type {@code RETURN_tYPE} if success.</p> */
     @FunctionalInterface
     public static interface SupplyingTest<RETURN_TYPE> {
         public RETURN_TYPE test() throws Exception;
