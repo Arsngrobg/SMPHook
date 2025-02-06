@@ -1,4 +1,4 @@
-package dev.arsngrobg.smphook.concurrent;
+package dev.arsngrobg.smphook.concurrency;
 
 /**
  * <p>A {@code Task} is defined as a unit of work which a {@link Worker} {@link Thread} will execute.</p>
