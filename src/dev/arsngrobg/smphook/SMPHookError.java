@@ -101,7 +101,7 @@ public final class SMPHookError extends Error {
     }
 
     /**
-     * <p>Executes the supplied test ({@code t} code block.</p>
+     * <p>Executes the supplied test ({@code t}) code block.</p>
      * 
      * <p>Upon a thrown {@link Exception}, it will be consumed (ignored).</p>
      * 
