@@ -106,9 +106,7 @@ public final class Worker {
     private Optional<Worker> child = Optional.empty();
 
     private Worker(Thread thread, Class<?> caller) throws SMPHookError {
-        if (!SMPHookError.requireNonNull(thread).isVirtual()) { // dev assertion
-            throw SMPHookError.with(ErrorType.CONCURRENCY, "The supplied worker thread is not a virtual thread.");
-        }
+        SMPHookError.assertion(() -> !SMPHookError.requireNonNull(thread).isVirtual()); // shouldn't happen
 
         this.thread = thread;
         this.caller = SMPHookError.requireNonNull(caller);

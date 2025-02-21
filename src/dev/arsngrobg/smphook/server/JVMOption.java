@@ -56,7 +56,7 @@ public abstract sealed class JVMOption permits JVMOption.Enabled, JVMOption.Assi
 
     // base constructor
     protected JVMOption(String option) throws SMPHookError {
-        this.option = SMPHookError.requireNonNull(option, "option");;
+        this.option = SMPHookError.requireNonNull(option, "option");
     }
 
     /** @return the option string of this JVM option */

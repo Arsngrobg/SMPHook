@@ -7,7 +7,7 @@ import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.util.Arrays;
 import java.util.Objects;
-import java.util.Optional;
+import java.util.function.BiFunction;
 import java.util.stream.Stream;
 
 import dev.arsngrobg.smphook.SMPHookError;
@@ -33,20 +33,6 @@ import static dev.arsngrobg.smphook.SMPHookError.condition;
  * @see    MinecraftServer
  */
 public final class ServerProcess {
-    /** <p>The String that represents the End Of File (EOF) character output by the server when it has finished running.</p> */
-    public static final String EOF = "\0";
-
-    // metadata
-    private final File serverJar;
-    private final Optional<HeapArg> minHeap;
-    private final Optional<HeapArg> maxHeap;
-    private final JVMOption[] options;
-
-    // process data
-    private Process process;
-    private BufferedWriter istream;
-    private BufferedReader ostream;
-
     /**
      * <p>Instantiates a {@code ServerProcess} object.</p>
      * 
@@ -63,15 +49,36 @@ public final class ServerProcess {
      * @param options - a variable number of JVM options
      * @throws SMPHookError if {@code serverJar} is: {@code null}, doesn't exist, or not a file; the {@code minHeap} & {@code maxHeap} are mismatched
      */
-    public ServerProcess(String serverJar, HeapArg minHeap, HeapArg maxHeap, JVMOption... options) throws SMPHookError {
+    public static ServerProcess construct(String serverJar, HeapArg minHeap, HeapArg maxHeap, JVMOption... options) throws SMPHookError {
+        return new ServerProcess(serverJar, minHeap, maxHeap, options);
+    }
+
+    /** <p>The String that represents the End Of File (EOF) character output by the server when it has finished running.</p> */
+    public static final String EOF = "\0";
+
+    // used for equals(Object)
+    private static final BiFunction<HeapArg, HeapArg, Boolean> xor = (a1, a2) -> (a1 == null && a2 != null) || (a1 != null && a2 == null);
+
+    // metadata
+    private final File serverJar;
+    private final HeapArg minHeap;
+    private final HeapArg maxHeap;
+    private final JVMOption[] options;
+
+    // process data
+    private Process process;
+    private BufferedWriter istream;
+    private BufferedReader ostream;
+
+    private ServerProcess(String serverJar, HeapArg minHeap, HeapArg maxHeap, JVMOption... options) throws SMPHookError {
         this.serverJar = SMPHookError.throwIfFail(() -> new File(serverJar));
         SMPHookError.caseThrow(
             condition(() -> !this.serverJar.exists(), SMPHookError.with(ErrorType.FILE, "The serverJar provided does not exist.")),
             condition(() -> !this.serverJar.isFile(), SMPHookError.with(ErrorType.FILE, "The serverJar provided is not a file."))
         );
 
-        this.minHeap = Optional.ofNullable(minHeap);
-        this.maxHeap = Optional.ofNullable(maxHeap);
+        this.minHeap = minHeap;
+        this.maxHeap = maxHeap;
         // this is cleaner than using the Optional methods
         if ((minHeap != null && maxHeap != null) && minHeap.compareTo(maxHeap) == 1) {
             throw SMPHookError.withMessage("Mismatched HeapArgs.");
@@ -224,8 +231,8 @@ public final class ServerProcess {
     /** @return the command that is used to initiate the server */
     public String getInitCommand() {
         StringBuilder commandBuilder = new StringBuilder("java ");
-        minHeap.ifPresent(min -> commandBuilder.append(min.toXms()).append(" "));
-        maxHeap.ifPresent(max -> commandBuilder.append(max.toXmx()).append(" "));
+        if (minHeap != null) commandBuilder.append(minHeap.toXms()).append(" ");
+        if (maxHeap != null) commandBuilder.append(maxHeap.toXms()).append(" ");
 
         for (JVMOption option : options) {
             commandBuilder.append(option).append(" ");
@@ -242,12 +249,12 @@ public final class ServerProcess {
 
     /** @return the minimum allocation pool argument for this server process, can be {@code null} */
     public HeapArg getMinHeap() {
-        return minHeap.orElse(null);
+        return minHeap;
     }
 
     /** @return the maximum allocation pool argument for this server process, can be {@code null} */
     public HeapArg getMaxHeap() {
-        return maxHeap.orElse(null);
+        return maxHeap;
     }
 
     /** @return the Java Virtual Machine (JVM) options used to customize this server process, can be <i>empty</i> */
@@ -271,13 +278,12 @@ public final class ServerProcess {
         // abort if min1 is null and min2 isnt
         // abort if min1 != min2
 
-        // either null
-        if (minHeap.isPresent() && asProc.minHeap.isEmpty() || minHeap.isEmpty() && asProc.minHeap.isPresent()) {
+        // if this XOR other (null-check) 
+        if (xor.apply(minHeap, asProc.minHeap) || xor.apply(maxHeap, asProc.maxHeap)) {
             return false;
         }
 
-        // not equal
-        else if (!minHeap.get().equals(asProc.minHeap.get())) {
+        if (minHeap != asProc.minHeap || maxHeap != asProc.maxHeap) {
             return false;
         }
 

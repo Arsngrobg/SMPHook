@@ -2,7 +2,7 @@ package dev.arsngrobg.smphook;
 
 import java.util.Scanner;
 
-import dev.arsngrobg.smphook.concurrent.Worker;
+import dev.arsngrobg.smphook.concurrency.Worker;
 import dev.arsngrobg.smphook.server.HeapArg;
 import dev.arsngrobg.smphook.server.JVMOption;
 import dev.arsngrobg.smphook.server.ServerProcess;
@@ -45,7 +45,7 @@ public final class SMPHook {
             JVMOption.assigned("G1HeapRegionSize", "32M")
         };
 
-        ServerProcess proc = new ServerProcess(entryPoint, minHeap, maxHeap, options);
+        ServerProcess proc = ServerProcess.construct(entryPoint, minHeap, maxHeap, options);
         System.out.printf("Running Minecraft Server Process with command: %s\n", proc.getInitCommand());
 
         Worker w = Worker.ofWaiting(() -> {
@@ -57,14 +57,14 @@ public final class SMPHook {
             }
         });
 
-        proc.init(true);
+        proc.init(false);
 
         w.start();
 
         String line;
         while (!(line = proc.rawOutput()).equals(ServerProcess.EOF)) {
             System.out.printf("[Server] :: %s\n", line);
-        }   
+        }
     }
 
     private SMPHook() {}

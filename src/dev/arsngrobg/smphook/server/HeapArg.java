@@ -46,7 +46,7 @@ public final class HeapArg implements Comparable<HeapArg> {
     }
 
     /** <p>The units supported by many of the JVM implementations.</p> */
-    public static enum Unit {
+    public enum Unit {
         BYTE, KILOBYTE, MEGABYTE, GIGABYTE
     }
 

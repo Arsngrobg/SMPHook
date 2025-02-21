@@ -5,7 +5,7 @@ import java.util.function.Supplier;
 
 /**
  * <p>The {@code SMPHookError} class represents an error in the SMPHook system.
- *    This class encapsulates various error types and provides factory methods to create errors, including <b>GENERIC</b>, <b>NULL_REFERENCE</b>, and <b>PROPOGATED</b> types.
+ *    This class encapsulates various error types and provides factory methods to create errors, including <b>GENERIC</b>, <b>NULL_REFERENCE</b>, and <b>PROPAGATED</b> types.
  * </p>
  * 
  * <p>See {@link SMPHookError.ErrorType} for the various supported error types for an {@code SMPHookError}.</p>
@@ -18,18 +18,18 @@ import java.util.function.Supplier;
 public final class SMPHookError extends Error {
     /** <p>A simple function to test a block of code.</p> */
     @FunctionalInterface
-    public static interface Test {
-        public void test() throws Exception;
+    public interface Test {
+        void test() throws Exception;
     }
 
-    /** <p>A function that executes the block of code, and returns a value of type {@code RETURN_tYPE} if success.</p> */
+    /** <p>A function that executes the block of code, and returns a value of type {@code RETURN_TYPE} if success.</p> */
     @FunctionalInterface
-    public static interface SupplyingTest<RETURN_TYPE> {
-        public RETURN_TYPE test() throws Exception;
+    public interface SupplyingTest<RETURN_TYPE> {
+        RETURN_TYPE test() throws Exception;
     }
 
     /** <p>Enumeration representing different types of errors.</p> */
-    public static enum ErrorType {
+    public enum ErrorType {
         /** <p>The most basic error.</p> */
         GENERIC,
         /** <p>An error caused by failed file operations.</p> */
@@ -42,8 +42,10 @@ public final class SMPHookError extends Error {
         NULL_REFERENCE,
         /** <p>An error caused by the internal type wrapped by a wrapper type.</p> */
         WRAPPER_TYPE,
-        /** <p>An error that is propogated by another throwable.</p> */
-        PROPAGATED
+        /** <p>An error that is propagated by another throwable.</p> */
+        PROPAGATED,
+        /** <p><An error that is thrown using an assert./p> */
+        ASSERTION
     }
 
     /** <p>A simple Data Tranfer Object (DTO) for a condition case used in {@link #caseThrow(Case...)}</p> */
@@ -87,10 +89,9 @@ public final class SMPHookError extends Error {
      * <p>To easily define a condition, use the {@link #condition(Supplier, SMPHookError)} method.</p>
      * 
      * @param cases - the cases to check for
-     * @throws SMPHookError
+     * @throws SMPHookError if any one of the conditions are {@code true}
      * @see SMPHookError#condition(Supplier, SMPHookError)
      */
-    @SafeVarargs
     public static void caseThrow(SMPHookError.Case... cases) throws SMPHookError {
         for (Case c : cases) {
             SMPHookError.requireNonNull(c);
@@ -115,7 +116,7 @@ public final class SMPHookError extends Error {
     /**
      * <p>Executes the supplied test ({@code t}) code block.</p>
      * 
-     * <p>A <b>PROPOGATED</b> {@code SMPHookError} is thrown if this test fails.</p>
+     * <p>A <b>PROPAGATED</b> {@code SMPHookError} is thrown if this test fails.</p>
      * 
      * @param t - the test to check for thrown exceptions
      * @throws SMPHookError if an exception was thrown by the test ({@code t})
@@ -129,7 +130,7 @@ public final class SMPHookError extends Error {
     /**
      * <p>Executes the supplied test ({@code t}) code block, and returns the value of type {@code RETURN_TYPE}.</p>
      * 
-     * <p>A <b>PROPOGATED</b> {@code SMPHookError} is thrown if this test fails.</p>
+     * <p>A <b>PROPAGATED</b> {@code SMPHookError} is thrown if this test fails.</p>
      * 
      * @param <RETURN_TYPE> - the type that the test ({@code t}) returns
      * @param t - the test to check for thrown exceptions
@@ -147,18 +148,22 @@ public final class SMPHookError extends Error {
      * </p>
      * 
      * @param t - the {@link java.lang.Throwable}
-     * @return a new <b>PROPOGATED</b> {@code SMPHookError} instance
+     * @return a new <b>PROPAGATED</b> {@code SMPHookError} instance
      * @throws SMPHookError if t is {@code null}
      */
     public static SMPHookError withCause(Throwable t) throws SMPHookError {
         SMPHookError.requireNonNull(t);
 
+        StackTraceElement first = t.getStackTrace()[0];
+        if (first == null) {
+            return SMPHookError.with(ErrorType.PROPAGATED, t.getClass().getName());
+        }
+
         StringBuilder sb = new StringBuilder();
 
-        StackTraceElement first = t.getStackTrace()[0];
         sb.append(t.getClass().getName())
           .append(" was thrown at ")
-          .append(first.getFileName().substring(0, first.getFileName().length() - 4))
+          .append(first.getFileName(), 0, first.getFileName().length() - 4)
           .append(first.getMethodName())
           .append("(")
           .append(first.getLineNumber())
@@ -213,7 +218,6 @@ public final class SMPHookError extends Error {
      * @param identifiers - the list of variables to display in the detailed error message
      * @return a new <b>NULL_REFERENCE</b> {@code SMPHookError} instance
      */
-    @SafeVarargs
     public static SMPHookError nullReference(String... identifiers) {
         String errMsg;
 
@@ -240,6 +244,24 @@ public final class SMPHookError extends Error {
      */
     public static SMPHookError withMessage(String message) {
         return SMPHookError.with(ErrorType.GENERIC, message);
+    }
+
+    /**
+     * <p>Executes the supplied test {@code t}.
+     *    If failure, it will throw an <b>ASSERTION</b> error. 
+     * </p>
+     * 
+     * <p>Useful for conditions that the dev needs to be aware of.</p>
+     * 
+     * @param t - the test to assert with
+     * @throws SMPHookError if the assertion fails
+     */
+    public static void assertion(SupplyingTest<Boolean> t) throws SMPHookError {
+        SMPHookError.requireNonNull(t);
+
+        try {assert t.test(); }
+        catch (Exception _e)       {}
+        catch (AssertionError err) { SMPHookError.withCause(err); }
     }
 
     /**
