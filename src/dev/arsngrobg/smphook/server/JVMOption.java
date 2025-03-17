@@ -1,155 +1,161 @@
 package dev.arsngrobg.smphook.server;
 
-import java.util.Objects;
-
+import dev.arsngrobg.smphook.SMPHook;
 import dev.arsngrobg.smphook.SMPHookError;
+import static dev.arsngrobg.smphook.SMPHookError.nullCondition;
 
 /**
- * <p>The {@code JVMOption} class represents a Java Virtual Machine (JVM) option.</p>
+ * <p>The {@code JVMOption} interface represents an experimental Java Virtual Machine (JVM) option.</p>
  * 
- * <p>This class serves as a base for different types of JVM options, such as <i>enabled</i>/<i>disabled</i> options, and options with <i>assigned</i> values.
+ * <p>This interface serves as a base for different types of JVM options, such as <b>enabled</b>/<b>disabled</b>, and options with <b>assigned</b> values.
  *    It defines common behaviour with all JVM options.
  * </p>
  * 
  * @author Arsngrobg
  * @since  1.0
- * @see    JVMOption.Enabled
- * @see    JVMOption.Assigned
+ * @see    #enabled(String)
+ * @see    #disabled(String)
+ * @see    #assigned(String, Object)
  * @see    ServerProcess
  */
-public abstract sealed class JVMOption permits JVMOption.Enabled, JVMOption.Assigned {
+public sealed interface JVMOption permits JVMOption.Enabled, JVMOption.Assigned {
     /**
-     * <p>Instantiates an {@code Enabled} JVM option, specified with the {@code option} and internally assigned {@code true}.</p>
+     * <p>Constructs an <b>enabled</b> {@code JVMOption} with the supplied {@code optionName}.</p>
      * 
-     * @param option - the option string to enable
-     * @return an enabled JVM option
-     * @throws SMPHookError if {@code option} is {@code null}
+     * @param optionName - the name of the experimental JVM option
+     * @return an <b>enabled</b> {@code JVMOption} instance
+     * @throws SMPHookError if {@code optionName} is {@code null}
      */
-    public static JVMOption.Enabled enabled(String option) throws SMPHookError {
-        return new Enabled(option, true);
+    public static JVMOption.Enabled enabled(String optionName) throws SMPHookError {
+        return new Enabled(SMPHookError.strictlyRequireNonNull(optionName, "optionName"), true);
     }
 
     /**
-     * <p>Instantiates an {@code Enabled} JVM option, specified with the {@code option} and internally assigned {@code false}.</p>
+     * <p>Constructs a <b>disabled</b> {@code JVMOption} with the supplied {@code optionName}.</p>
      * 
-     * @param option - the option string to disable
-     * @return an enabled (internally disabled) JVM option
-     * @throws SMPHookError if {@code option} is {@code null}
+     * @param optionName - the name of the experimental JVM option
+     * @return a <b>disabled</b> {@code JVMOption} instance
+     * @throws SMPHookError if {@code optionName} is {@code null}
      */
-    public static JVMOption.Enabled disabled(String option) throws SMPHookError {
-        return new Enabled(option, false);
+    public static JVMOption.Enabled disabled(String optionName) throws SMPHookError {
+        return new Enabled(SMPHookError.strictlyRequireNonNull(optionName, "optionName"), false);
     }
 
     /**
-     * <p>Instantiates an {@code Asssigned} JVM option, specified with the {@code option} and assign it with the {@code value}.</p>
+     * <p>Constructs an <b>assigned</b> {@code JVMOption} with the supplied {@code optionName} and {@code value}.
+     *    The generic {@code value} object 
+     * </p>
      * 
-     * @param option - the option to assign with {@code value}
-     * @param value - the value to assign to the {@code option}
-     * @return an assigned JVM option
-     * @throws SMPHookError if {@code option} or {@code value} is {@code null}
+     * @param optionName - the name of the experimental JVM option
+     * @param      value - the value to assign to the JVM option
+     * @return a <b>assigned</b> {@code JVMOption} instance with the supplied {@code value}
+     * @throws SMPHookError if {@code optionName} or {@code value} is {@code null}
      */
-    public static JVMOption.Assigned assigned(String option, String value) throws SMPHookError {
-        return new Assigned(option, value);
+    public static JVMOption.Assigned assigned(String optionName, Object value) throws SMPHookError {
+        SMPHookError.caseThrow(
+            nullCondition(optionName, "optionName"),
+            nullCondition(value, "value")
+        );
+
+        return new Assigned(optionName, String.valueOf(value));
     }
 
-    protected final String option;
-
-    // base constructor
-    protected JVMOption(String option) throws SMPHookError {
-        this.option = SMPHookError.requireNonNull(option, "option");
-    }
-
-    /** @return the option string of this JVM option */
-    public String getOption() {
-        return option;
-    }
-
-    public abstract int hashCode();
-
-    @Override
-    public boolean equals(Object obj) {
-        if (obj == null)                  return false;
-        if (obj == this)                  return true;
-        if (getClass() != obj.getClass()) return false;
-        JVMOption asOption = (JVMOption) obj;
-        return option.equals(asOption.option);
-    }
-
-    public abstract String toString();
+    /** @return the name of the experimental JVM option */
+    String getOptionName();
 
     /**
-     * <p>A Java Virtual Machine (JVM) option with an additional enabled flag.</p>
+     * <p><i>This class is an implementation of the {@link JVMOption} interface.</i></p>
+     * 
+     * <p>This class comes with an additional {@code enabed} flag.</p>
      * 
      * @author Arsngrobg
      * @since  1.0
      * @see    JVMOption
      */
-    public static final class Enabled extends JVMOption {
+    public static final class Enabled implements JVMOption {
+        private final String name;
         private final boolean enabled;
 
-        private Enabled(String option, boolean enabled) {
-            super(option);
+        private Enabled(String name, boolean enabled) {
+            this.name = name;
             this.enabled = enabled;
         }
 
-        /** @return whether this JVM option is enabled */
+        @Override
+        public String getOptionName() {
+            return name;
+        }
+
+        /** @return whether this Java Virtual Machine (JVM) option is enabled */
         public boolean isEnabled() {
             return enabled;
         }
 
         @Override
         public int hashCode() {
-            return Objects.hash(option, enabled);
+            return SMPHook.hashOf(name, enabled);
         }
 
         @Override
         public boolean equals(Object obj) {
-            if (!super.equals(obj)) return false;
-            Enabled asOption = (Enabled) obj;
-            return enabled == asOption.enabled;
+            if (obj == null) return false;
+            if (obj == this) return true;
+            if (obj.getClass() != getClass()) return false;
+            Enabled asEnabledOption = (Enabled) obj;
+            return enabled == asEnabledOption.enabled && name.equals(asEnabledOption.name);
         }
 
         @Override
         public String toString() {
-            return String.format("-XX:%c%s", enabled ? '+' : '-', option);
+            return String.format("-XX:%c%s", enabled ? '+' : '-', name);
         }
     }
 
     /**
-     * <p>A Java Virtual Machine (JVM) option with an additional assigned value.</p>
+     * <p><i>This class is an implementation of the {@link JVMOption} interface.</i></p>
+     * 
+     * <p>This class comes with an additional {@code value} field.</p>
      * 
      * @author Arsngrobg
      * @since  1.0
      * @see    JVMOption
      */
-    public static final class Assigned extends JVMOption {
+    public static final class Assigned implements JVMOption {
+        private final String name;
         private final String value;
 
-        private Assigned(String option, String value) throws SMPHookError {
-            super(option);
-            this.value = SMPHookError.requireNonNull(value, "value");
+        private Assigned(String name, String value) {
+            this.name  = name;
+            this.value = value;
         }
 
-        /** @return the value that this JVM option is assigned to */
+        @Override
+        public String getOptionName() {
+            return name;
+        }
+
+        /** @return the value assigned to this Java Virtual Machine (JVM) option */
         public String getValue() {
             return value;
         }
 
         @Override
         public int hashCode() {
-            return Objects.hash(option, value);
+            return SMPHook.hashOf(name, value);
         }
 
         @Override
         public boolean equals(Object obj) {
-            if (!super.equals(obj)) return false;
-            Assigned asOption = (Assigned) obj;
-            return value.equals(asOption.value);
+            if (obj == null) return false;
+            if (obj == this) return true;
+            if (obj.getClass() != getClass()) return false;
+            Assigned asAssignedOption = (Assigned) obj;
+            return value.equals(asAssignedOption.value) && name.equals(asAssignedOption.name);
         }
 
         @Override
         public String toString() {
-            return String.format("-XX:%s=%s", option, value);
+            return String.format("-XX:%s=%s", name, value);
         }
     }
 }

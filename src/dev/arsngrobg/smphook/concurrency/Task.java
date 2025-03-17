@@ -1,20 +1,20 @@
 package dev.arsngrobg.smphook.concurrency;
 
 /**
- * <p>A {@code Task} is defined as a unit of work which a {@link Worker} {@link Thread} will execute.</p>
- * 
- * <p>It has the same signature as the {@link Runnable} interface but delegates the exception handling to the caller.</p>
+ * <p>The {@code Task} interface is a functional interface which a {@link TaskExecutor} executes.</p>
  * 
  * @author Arsngrobg
  * @since  1.0
- * @see    Worker
+ * @see    TaskExecutor
  */
 @FunctionalInterface
 public interface Task {
     /**
-     * <p>Executes the code block within this method body.</p>
+     * <p>Executes the block of code wrapped by this {@code Task} object.</p>
      * 
-     * @throws Exception
+     * <p>This method may throw an {@link java.lang.Exception} and is always consumed and not handled.</p>
+     * 
+     * @throws Exception any exception that may be thrown by this block of code
      */
     void execute() throws Exception;
 }

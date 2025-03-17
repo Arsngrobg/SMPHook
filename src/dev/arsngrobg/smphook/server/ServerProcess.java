@@ -6,25 +6,26 @@ import java.io.File;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.util.Arrays;
-import java.util.Objects;
+import java.util.Optional;
 import java.util.function.BiFunction;
 import java.util.stream.Stream;
 
+import dev.arsngrobg.smphook.SMPHook;
 import dev.arsngrobg.smphook.SMPHookError;
 import dev.arsngrobg.smphook.SMPHookError.ErrorType;
 import static dev.arsngrobg.smphook.SMPHookError.condition;
 
 /**
- * <p>The {@code ServerProcess} class wraps a {@link java.lang.Process}, running a Java Minecraft server process.</p>
+ * <p>The {@code ServerProcess} class wraps a {@link java.lang.Process}, specifically running a Java Minecraft server process.</p>
  * 
- * <p>This class handles the stopping, starting, and I/O operations between SMPHook and the server.</p>
+ * <p>This class handles the I/O operations between SMPHook and the server.</p>
  * 
- * <p>A server process is highly customizable, allowing the use of Java Virtual Machine (JVM) options using the {@link JVMOption} class.
- *    The minimum and maximum allocation pools can be defined using the {@link HeapArg} class.
- *    This provides a near 1:1 interface for creating a server process but through the Java environment.
+ * <p>A server process is highly customizable, allowing the use of experimental Java Virtual Machine (JVM) options using the {@link JVMOption} class.
+ *    The minimum and maximum memory allocations can be defined using the {@link HeapArg} class.
+ *    This provides a near 1:1 interface for creating a Minecraft: Java Edition process but through the Java environment.
  * </p>
  * 
- * <p>The underlying process is not initiated on object instantiation, but rather through the {@link #init(boolean)} method.</p>
+ * <p>The underlying process is not initiated on object creation, but rather through the {@link #init(boolean)} method.</p>
  * 
  * @author Arsngrobg
  * @since  1.0
@@ -34,70 +35,72 @@ import static dev.arsngrobg.smphook.SMPHookError.condition;
  */
 public final class ServerProcess {
     /**
-     * <p>Instantiates a {@code ServerProcess} object.</p>
+     * <p>Constructs a {@code ServerProcess}.</p>
      * 
-     * <p>The constructor is for validation purposes, checking to see if the {@code serverJar} is the correct JAR file for Minecraft: Java Edition servers.</p>
-     * 
-     * <p>The {@code minHeap} & {@code maxHeap} arguments are <b>optional</b> and can be {@code null}.
+     * <p>This factory method validates the supplied {@code serverJar}.
+     *    The {@code minHeap} and {@code maxHeap} arguments are <b>optional</b> and can be {@code null}.
+     *    The {@link HeapArg}s cannot be mismatched or else an {@link SMPHookError} is thrown.
      *    You can supply a variable number of Java Virtual Machine (JVM) options to customize the Java runtime (see {@link JVMOption}).
-     *    These arguments affect the result of the method {@link #getInitCommand()}.
+     *    These arguments affect the result of the method {@link #getInitCommand()}, and subsequently the server itself.
      * </p>
      * 
-     * @param serverJar - the Minecraft: Java Edition server JAR file to be ran
-     * @param minHeap - the minimum allocation pool for the server, can be {@code null}
-     * @param maxHeap - the maximum allocation pool for the server, can be {@code null}
-     * @param options - a variable number of JVM options
+     * @param serverJar - the path to the Minecraft: Java Edition server JAR file to be invoked
+     * @param minHeap - the minimum allocation argument for the server
+     * @param maxHeap - the maximum allocation argument for the server
+     * @param options - a variable number of {@link JVMOption}s
      * @throws SMPHookError if {@code serverJar} is: {@code null}, doesn't exist, or not a file; the {@code minHeap} & {@code maxHeap} are mismatched
+     * @return a new {@code ServerProcess} instance
      */
-    public static ServerProcess construct(String serverJar, HeapArg minHeap, HeapArg maxHeap, JVMOption... options) throws SMPHookError {
-        return new ServerProcess(serverJar, minHeap, maxHeap, options);
+    public static ServerProcess spawn(String serverJar, HeapArg minHeap, HeapArg maxHeap, JVMOption... options) throws SMPHookError {
+        File serverJarFile = SMPHookError.throwIfFail(() -> new File(serverJar));
+        SMPHookError.caseThrow(
+            condition(() -> !serverJarFile.exists(), SMPHookError.with(ErrorType.FILE, "serverJar does not exist.")),
+            condition(() -> !serverJarFile.isFile(), SMPHookError.with(ErrorType.FILE, "serverJar is not a file.")),
+            condition(() -> {
+                String ext = serverJar.substring(serverJar.length() - 4, serverJar.length());
+                return !ext.equals(".jar");
+            }, SMPHookError.with(ErrorType.FILE, "serverJar file is not a .jar file."))
+        );
+
+        if ((minHeap != null && maxHeap != null) && minHeap.compareTo(maxHeap) == HeapArg.GREATER_THAN) {
+            throw SMPHookError.withMessage("Mismatched heap arguments.");
+        }
+
+        options = Stream.of(options).filter(o -> o != null).toArray(JVMOption[]::new);
+
+        return new ServerProcess(serverJarFile, minHeap, maxHeap, options);
     }
 
-    /** <p>The String that represents the End Of File (EOF) character output by the server when it has finished running.</p> */
+    /** <p>The string that represents the End Of File (EOF) character output by the server to declare that no more output will be made.</p> */
     public static final String EOF = "\0";
 
-    // used for equals(Object)
-    private static final BiFunction<HeapArg, HeapArg, Boolean> xor = (a1, a2) -> (a1 == null && a2 != null) || (a1 != null && a2 == null);
-
     // metadata
-    private final File serverJar;
-    private final HeapArg minHeap;
-    private final HeapArg maxHeap;
+    private final File        serverJar;
+    private final HeapArg     minHeap;
+    private final HeapArg     maxHeap;
     private final JVMOption[] options;
 
-    // process data
-    private Process process;
+    // state
+    private Process        process;
     private BufferedWriter istream;
     private BufferedReader ostream;
 
-    private ServerProcess(String serverJar, HeapArg minHeap, HeapArg maxHeap, JVMOption... options) throws SMPHookError {
-        this.serverJar = SMPHookError.throwIfFail(() -> new File(serverJar));
-        SMPHookError.caseThrow(
-            condition(() -> !this.serverJar.exists(), SMPHookError.with(ErrorType.FILE, "The serverJar provided does not exist.")),
-            condition(() -> !this.serverJar.isFile(), SMPHookError.with(ErrorType.FILE, "The serverJar provided is not a file."))
-        );
-
-        this.minHeap = minHeap;
-        this.maxHeap = maxHeap;
-        // this is cleaner than using the Optional methods
-        if ((minHeap != null && maxHeap != null) && minHeap.compareTo(maxHeap) == 1) {
-            throw SMPHookError.withMessage("Mismatched HeapArgs.");
-        }
-
-        this.options = Stream.of(options).filter(o -> o != null).toArray(JVMOption[]::new);
+    private ServerProcess(File serverJar, HeapArg minHeap, HeapArg maxHeap, JVMOption... options) {
+        this.serverJar = serverJar;
+        this.minHeap   = minHeap;
+        this.maxHeap   = maxHeap;
+        this.options   = options;
     }
 
     /**
-     * <p>Initialises the server process. If it is already running, an {@link SMPHookError} will be thrown.</p>
+     * <p>Initialises the server process.</p>
      * 
-     * <p>The server process is initiated in the directory provided by the {@code serverJar} file.</p>
+     * <p>If the server process is already running, an {@link SMPHookError} is thrown.</p>
      * 
-     * <p>I/O operations can be performed on this object with {@link #rawInput(String)} and {@link #rawOutput}.
-     *    And the process can be terminated with either the {@link #stop()} or {@link #forceStop()}
-     * </p>
+     * <p>I/O operations can be performed on this process with {@link #rawInput(String) and {@link #rawOutput()}.</p>
      * 
-     * @param nogui - whether to display the pre-packaged GUI on creation
-     * @throws SMPHookError if the process cannot be started
+     * @param nogui - whether to display the pre-packaged GUI on initialisation
+     * @throws SMPHookError if the process is already running
      * @see #rawInput(String)
      * @see #rawOutput()
      */
@@ -108,19 +111,18 @@ public final class ServerProcess {
 
         String initCommand = getInitCommand();
         if (nogui) {
-            initCommand = initCommand.concat(" nogui");
+            initCommand.concat(" nogui");
         }
         String[] commandTokens = initCommand.split("\\s+");
 
-        ProcessBuilder procBuilder = new ProcessBuilder(commandTokens);
-
+        ProcessBuilder processBuilder = new ProcessBuilder(commandTokens);
         File directory = serverJar.getParentFile();
         if (directory != null) {
-            procBuilder.directory(directory);
+            processBuilder.directory(directory);
         }
 
         SMPHookError.throwIfFail(() -> {
-            process = procBuilder.start();
+            process = processBuilder.start();
             istream = new BufferedWriter(new OutputStreamWriter(process.getOutputStream()));
             ostream = new BufferedReader(new InputStreamReader(process.getInputStream()));
 
@@ -137,7 +139,7 @@ public final class ServerProcess {
      *    Any escape characters are replaced with their literal equivalent (e.g. any {@code '\n'} are replaced as {@code '\\n'}).
      * </p>
      * 
-     * @param command - the Minecraft command to process
+     * @param command - the Minecraft command to be processed
      * @throws SMPHookError if the process is not running, or an {@link java.io.IOException} occurs
      */
     public void rawInput(String command) throws SMPHookError {
@@ -145,7 +147,7 @@ public final class ServerProcess {
             throw SMPHookError.with(ErrorType.IO, "Server process is not running.");
         }
 
-        String cleanedCommand = command.replaceAll("\n", "\\n");
+        String cleanedCommand = command.replaceAll("", "\\n");
 
         SMPHookError.throwIfFail(() -> {
             istream.write(cleanedCommand);
@@ -155,12 +157,12 @@ public final class ServerProcess {
     }
 
     /**
-     * <p>Reads out the next line that was output by the server in a First in First Out (FIFO) fashion.</p>
-     *
-     * <p>If the End Of File (EOF) character ({@code "\0"}) is returned by this method, the server is no longer prodoucing output (the server has finished running).</p>
+     * <p>Reads out the next line output by the server in a First In First Out (FIFO) order.</p>
      * 
-     * @return the next line
-     * @throws SMPHookError if the process is not running, or an {@link java.io.IOException} occurs
+     * <p>If the End Of Line (EOF) character ({@code "\0"}) is returned by this method, the server is no longer producing output.</p>
+     * 
+     * @return the next line from the server
+     * @throws SMPHookError if the process is not running, or an {@link java.io.IOException}
      */
     public String rawOutput() throws SMPHookError {
         if (!isRunning()) {
@@ -174,65 +176,33 @@ public final class ServerProcess {
     }
 
     /**
-     * <p>Attemps to stop the server process by pumping the {@code stop} command to the process' input stream.</p>
-     * 
-     * <p>This method is not guaranteed to successfully stop the server (see {@link #forceStop()}).</p>
-     * 
-     * @throws SMPHookError if the process is not running, or an {@link java.io.IOException} occurs
-     */
-    public void stop() throws SMPHookError {
-        rawInput("stop");
-    }
-
-    /**
-     * <p>Forcefully stops the server process.</p>
-     * 
-     * @throws SMPHookError if the process is not running
-     */
-    public void forceStop() throws SMPHookError {
-        if (!isRunning()) {
-            throw SMPHookError.with(ErrorType.IO, "Server process is not running.");
-        }
-        process.destroyForcibly();
-    }
-
-    /**
-     * <p>Checks to see if the server is running.
-     *    If so, it checks to make sure the process is in a good state, if not an {@link SMPHookError} is thrown.
-     *    The server process is also forcibly stopped.
+     * <p>Checks to see if the server process in running.
+     *    If it is, it will also check if the input and output streams are non-null.
+     *    If not an {@link SMPHookError} is thrown.
      * </p>
      * 
-     * @return {@code true} if the server process is running, {@code false} if otherwise
-     * @throws SMPHookError if the server process is in an unusual state
+     * @return {@code true} if running (+ in typical state), or {@code false} if otherwise
+     * @throws SMPHookError if the process is in an unusual state
      */
     public boolean isRunning() throws SMPHookError {
-        boolean isRunning = process != null;
-        if (isRunning && (istream == null || ostream == null)) { // this should never happen but always good to check
-            forceStop();
-            throw SMPHookError.with(ErrorType.IO, "Server process in unusual state - forcefully aborting.");
+        boolean active = process != null;
+        if (active && (istream == null || ostream == null)) {
+            throw SMPHookError.with(ErrorType.IO, "ServerProcess in unusual state - force stopping.");
         }
-        return isRunning;
+        return active;
     }
 
     /**
-     * <p>Gets the PID of this server process.</p>
+     * <p>Constructs the server initialisation command using its provided serverJar,
+     *    minimum and maximum heap allocation arguments, and JVM options.
+     * </p>
      * 
-     * @return this server process' PID
-     * @throws SMPHookError if the process is not running
+     * @return the formatted command to initialise the server
      */
-    public long getPID() throws SMPHookError {
-        if (!isRunning()) {
-            throw SMPHookError.with(ErrorType.IO, "Server process is not running.");
-        }
-        process.destroyForcibly();
-        return process.pid();
-    }
-
-    /** @return the command that is used to initiate the server */
     public String getInitCommand() {
         StringBuilder commandBuilder = new StringBuilder("java ");
         if (minHeap != null) commandBuilder.append(minHeap.toXms()).append(" ");
-        if (maxHeap != null) commandBuilder.append(maxHeap.toXms()).append(" ");
+        if (maxHeap != null) commandBuilder.append(maxHeap.toXmx()).append(" ");
 
         for (JVMOption option : options) {
             commandBuilder.append(option).append(" ");
@@ -242,48 +212,45 @@ public final class ServerProcess {
         return commandBuilder.toString();
     }
 
-    /** @return the server jar file that is running or to be running */
+    /** @return the server jar that this process will or is executing */
     public File getServerJar() {
         return serverJar;
     }
 
-    /** @return the minimum allocation pool argument for this server process, can be {@code null} */
-    public HeapArg getMinHeap() {
-        return minHeap;
+    /** @return the minimum heap allocation pool argument wrapped in an optional */
+    public Optional<HeapArg> getMinHeap() {
+        return Optional.ofNullable(minHeap);
     }
 
-    /** @return the maximum allocation pool argument for this server process, can be {@code null} */
-    public HeapArg getMaxHeap() {
-        return maxHeap;
+    /** @return the maximum heap allocation pool argument wrapped in an optional. */
+    public Optional<HeapArg> getMaxHeap() {
+        return Optional.ofNullable(maxHeap);
     }
 
-    /** @return the Java Virtual Machine (JVM) options used to customize this server process, can be <i>empty</i> */
+    /** @return the experimental Java Virtual Machine (JVM) options configured for this server process */
     public JVMOption[] getOptions() {
         return options;
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(serverJar, minHeap, maxHeap, options);
+        return SMPHook.hashOf(serverJar, minHeap, maxHeap, options);
     }
 
     @Override
     public boolean equals(Object obj) {
-        if (obj == null)                  return false;
-        if (obj == this)                  return true;
+        if (obj == null) return false;
+        if (obj == this) return true;
         if (getClass() != obj.getClass()) return false;
         ServerProcess asProc = (ServerProcess) obj;
-        
-        // abort if min2 is null and min1 isnt
-        // abort if min1 is null and min2 isnt
-        // abort if min1 != min2
 
-        // if this XOR other (null-check) 
-        if (xor.apply(minHeap, asProc.minHeap) || xor.apply(maxHeap, asProc.maxHeap)) {
-            return false;
-        }
+        final BiFunction<HeapArg, HeapArg, Boolean> check = (arg1, arg2) -> {
+            if (arg1 == null && arg2 == null)       return true;
+            if (arg1 != null && !arg1.equals(arg2)) return false;
+            return true;
+        };
 
-        if (minHeap != asProc.minHeap || maxHeap != asProc.maxHeap) {
+        if (!check.apply(minHeap, asProc.minHeap) || !check.apply(maxHeap, asProc.maxHeap)) {
             return false;
         }
 
@@ -292,9 +259,6 @@ public final class ServerProcess {
 
     @Override
     public String toString() {
-        if (!isRunning()) {
-            return "ServerProcess[inactive]";
-        }
-        return String.format("ServerProcess[PID: %d]", getPID());
+        return String.format("ServerProcess[-M:%s, +M:%d, O:%s]", minHeap.toXms(), maxHeap.toXmx(), Arrays.toString(options));
     }
 }

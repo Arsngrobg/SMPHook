@@ -1,51 +1,126 @@
 package dev.arsngrobg.smphook.server;
 
-import java.util.Objects;
-import java.util.stream.Stream;
-
+import dev.arsngrobg.smphook.SMPHook;
 import dev.arsngrobg.smphook.SMPHookError;
 import static dev.arsngrobg.smphook.SMPHookError.condition;
-import static dev.arsngrobg.smphook.SMPHookError.nullCase;
+import static dev.arsngrobg.smphook.SMPHookError.nullCondition;
 
 /**
- * <p>The {@code HeapArg} object represents a Java Virtual Machine (JVM) heap allocation argument.</p>
+ * <p>The {@code HeaepArg} class represents a Java Virtual Machine (JVM) heap allocation argument.
+ *    It consists of an unsigned, non-zero {@code size} and a {@code unit} (defined by {@link HeapArg.Unit} enum).
+ * </p>
  * 
- * <p>It consists of an unsigned {@code size} and a {@code Unit} (defined by the {@link Unit} enum).</p>
+ * <p>To construct a {@code HeapArg} object you can use the provided factory methods:
+ *    <ul>
+ *       <li>{@link #ofSize(long, Unit)} - creates a {@code HeapArg} object with the sepcified size and {@link HeapArg.Unit}</li>
+ *       <li>{@link #ofBytes(long)} - creates a {@code HeapArg} object from a given number of bytes</li>
+ *       <li>{@link #fromString(String)} - constructs a {@code HeapArg} object from its string representation</li>
+ *    </ul>
+ * </p>
  * 
- * <p>It can be constructed by its two constructors or class method {@link HeapArg#fromString(String)}.</p>
+ * <p>This class is immutable and implements the {@link java.lang.Comparable} interface,
+ *    allowing relative comparisons between other {@code HeapArg} objects.
+ * </p>
  * 
  * @author Arsngrobg
  * @since  1.0
+ * @see    HeapArg.Unit
+ * @see    #ofSize(long, Unit)
+ * @see    #ofBytes(long)
+ * @see    #fromString(String)
  * @see    ServerProcess
  */
 public final class HeapArg implements Comparable<HeapArg> {
-    private static final String ALLNUM_REGEX = "^\\d+$";
-    private static final String PROPER_REGEX = "^\\d+[A-Za-z]$";
-
     /**
-     * <p>Reverse engineers the supplied {@code argStr} string into its equivalent {@code HeapArg} object.</p>
+     * <p>Parses the supplied {@code argStr} into its equivalent {@code HeapArg} object.</p>
+     * 
+     * <p>The {@code argStr} can be a string consisting of only numbers (e.g. {@code 123} or a number followed by a unit suffix ({@code 123G}).</p>
      * 
      * @param argStr - the string to parse as a {@code HeapArg} object
      * @return a {@code HeapArg} object
-     * @throws SMPHookError if the supplied {@code argStr} is {@code null} or does not match the expected pattern for a {@code HeapArg} string 
+     * @throws SMPHookError if the {@code argStr} is {@code null} or invalid
+     * @see #ofSizeAndUnit(long, Unit)
+     * @see #ofBytes(long)
      */
     public static HeapArg fromString(String argStr) throws SMPHookError {
-        SMPHookError.requireNonNull(argStr);
+        SMPHookError.caseThrow(
+            nullCondition(argStr, "argStr"),
+            condition(() -> argStr.length() == 0, SMPHookError.withMessage("'argStr' must be a string of length greater than zero."))
+        );
 
-        if (argStr.matches(ALLNUM_REGEX)) {
+        boolean isAllNum = true;
+
+        for (int idx = 0; idx < argStr.length(); idx++) {
+            char ch = argStr.charAt(idx);
+
+            if (!Character.isLetterOrDigit(ch)) {
+                throw SMPHookError.withMessage("argStr is an invalid JVM heap allocation argument string.");
+            }
+
+            if (Character.isAlphabetic(ch)) {
+                if (idx == argStr.length() - 1) {
+                    isAllNum = false;
+                } else throw SMPHookError.withMessage("argStr is an invalid JVM heap allocation argument string.");
+            }
+        }
+
+        if (isAllNum) {
             long bytes = Long.parseLong(argStr);
-            return new HeapArg(bytes);
-        } else if (argStr.matches(PROPER_REGEX)) {
-            long size = Long.parseLong(argStr.substring(0, argStr.length() - 1));
-            Unit unit = Stream.of(Unit.values())
-                              .filter(u -> u.name().charAt(0) == argStr.charAt(argStr.length() - 1))
-                              .findFirst()
-                              .orElseThrow(() -> SMPHookError.withMessage("HeapArg unit suffix is invalid."));
-            return new HeapArg(size, unit);
-        } else throw SMPHookError.withMessage("argStr is not a proper HeapArg string.");
+            return HeapArg.ofBytes(bytes);
+        }
+
+        long size = Long.parseLong(argStr.substring(0, argStr.length() - 1));
+        char unitChar = argStr.charAt(argStr.length() - 1);
+        
+        Unit unit = null;
+        for (Unit u : Unit.values()) {
+            if (u.name().charAt(0) != unitChar) continue;
+            unit = u;
+        }
+
+        return HeapArg.ofSize(size, unit);
     }
 
-    /** <p>The units supported by many of the JVM implementations.</p> */
+    /**
+     * <p>Instantiates a {@code HeapArg} instance with the supplied amount of {@code bytes}.</p>
+     * 
+     * <p>This is syntatically-equivalent to {@code HeapArg.ofSize(bytes, Unit.BYTE)}</p>
+     * 
+     * @param bytes - an unsigned, non-zero integer denoting the amount of bytes this {@code HeapArg} is
+     * @return a new {@code HeapArg} instance
+     * @throws SMPHookError if {@code bytes} is -ve or zero
+     */
+    public static HeapArg ofBytes(long bytes) throws SMPHookError {
+        return HeapArg.ofSize(bytes, Unit.BYTE);
+    }
+
+    /**
+     * <p>Instantiates a {@code HeapArg} instance with the supplied {@code size} and {@code unit}.</p>
+     * 
+     * @param size - an unsigned, non-zero integer denoting the size of this heap argument
+     * @param unit - an enum value denoting the scale of this heap arg
+     * @return a new {@code heapArg} instance
+     * @throws SMPHookError if {@code size} is -ve or zero, or {@code unit} is {@code null}
+     */
+    public static HeapArg ofSize(long size, Unit unit) throws SMPHookError {
+        SMPHookError.caseThrow(
+            condition(() -> size <= 0, SMPHookError.withMessage("Size needs to be a positive integer.")),
+            nullCondition(unit, "unit")
+        );
+
+        return new HeapArg(size, unit);
+    }
+
+    /** <p>More descriptive constants for use when comparing two {@code HeapArg} objects.</p> 
+     * 
+     * @see #compareTo(HeapArg)
+     */
+    public static final int
+        EQUALS       =  0,
+        GREATER_THAN =  1,
+        LESS_THAN    = -1;
+
+    /** <p>The units supported by most of the JVM implementations. </p> */
     public enum Unit {
         BYTE, KILOBYTE, MEGABYTE, GIGABYTE
     }
@@ -53,48 +128,24 @@ public final class HeapArg implements Comparable<HeapArg> {
     private final long size;
     private final Unit unit;
 
-    /**
-     * <p>Instantiates a {@code HeapArg} object with the supplied {@code size} and {@code unit}.</p>
-     * 
-     * @param size - an unsigned integer denoting the size of this heap argument in [<i>unit</i>]bytes
-     * @param unit - an enum value denoting the scale of this heap arg
-     * @throws SMPHookError if {@code size} is zero or -ve, or if {@code unit} is {@code null}
-     */
-    public HeapArg(long size, Unit unit) throws SMPHookError {
-        SMPHookError.caseThrow(
-            condition(() -> size <= 0, SMPHookError.withMessage("size needs to be an unsigned, non-zero integer.")),
-            nullCase(unit, "unit")
-        );
-
+    private HeapArg(long size, Unit unit) {
         this.size = size;
         this.unit = unit;
     }
 
     /**
-     * <p>Instantiates a {@code HeapArg} object with the supplied {@code bytes}.</p>
+     * <p>Formats this {@code HeapArg} as a minimum allocation pool argument.</p>
      * 
-     * <p>This is syntatically-equivalent to {@code HeapArg(bytes, Unit.BYTE)}</p>
-     * 
-     * @param bytes - an unsigned integer denoting the number of bytes this argument is
-     * @throws SMPHookError if {@code bytes} is {@code 0} or -ve
-     */
-    public HeapArg(long bytes) throws SMPHookError {
-        this(bytes, Unit.BYTE);
-    }
-
-    /**
-     * <p>Formats this {@code HeapArg} object as a minimum allocation pool argument.</p>
-     * 
-     * @return this object's {@link #toString()} method prefixed with {@code -Xms}
+     * @return this {@code HeapArg}'s string representation prefixed with {@code "-Xms"}
      */
     public String toXms() {
         return String.format("-Xms%s", toString());
     }
 
     /**
-     * <p>Formats this {@code HeapArg} object as a maximum allocation pool argument.</p>
+     * <p>Formats this {@code HeapArg} as a maximum allocation pool argument.</p>
      * 
-     * @return this object's {@link #toString()} method prefixed with {@code -Xmx}
+     * @return this {@code HeapArg}'s string representation prefixed with {@code "-Xmx"}
      */
     public String toXmx() {
         return String.format("-Xmx%s", toString());
@@ -104,17 +155,19 @@ public final class HeapArg implements Comparable<HeapArg> {
     public long getSize() {
         return size;
     }
-
-    /** @return the unit of the heap argument */
+    
+    /** @return the unit of this heap argument */
     public Unit getUnit() {
         return unit;
     }
 
     @Override
     public int compareTo(HeapArg o) {
+        SMPHookError.strictlyRequireNonNull(o, "o");
+
         int unitDifference = unit.compareTo(o.unit);
-        // if unit is ordinally greater than o.unit: diff is +ve
-        // if unit is ordinally less than o.unit: diff is -ve
+        // if unit has ordinal value greater than o.unit: diff is +ve
+        // if unit has ordinal value less    than o.unit: diff is -ve
         long s1 =   size * (long) Math.pow(1000, Math.max(0, -unitDifference));
         long s2 = o.size * (long) Math.pow(1000, Math.max(0,  unitDifference));
         return Long.compare(s1, s2);
@@ -122,13 +175,13 @@ public final class HeapArg implements Comparable<HeapArg> {
 
     @Override
     public int hashCode() {
-        return Objects.hash(size, unit);
+        return SMPHook.hashOf(unit, size);
     }
 
     @Override
     public boolean equals(Object obj) {
-        if (obj == null)                  return false;
-        if (obj == this)                  return true;
+        if (obj == null) return false;
+        if (obj == this) return true;
         if (getClass() != obj.getClass()) return false;
         HeapArg asArg = (HeapArg) obj;
         return compareTo(asArg) == 0;
@@ -136,6 +189,6 @@ public final class HeapArg implements Comparable<HeapArg> {
 
     @Override
     public String toString() {
-        return String.format("%d%c", size, unit.name().charAt(0));
+        return String.format("%d%c", getSize(), getUnit().name().charAt(0));
     }
 }
