@@ -1,5 +1,6 @@
 package dev.arsngrobg.smphook;
 
+import dev.arsngrobg.smphook.concurrency.TaskExecutor;
 import dev.arsngrobg.smphook.server.HeapArg;
 import dev.arsngrobg.smphook.server.JVMOption;
 import dev.arsngrobg.smphook.server.ServerProcess;
@@ -87,16 +88,8 @@ public final class SMPHook {
         };
 
         ServerProcess proc = ServerProcess.spawn("smp\\server.jar", min, max, options);
-        System.out.println(proc.getInitCommand());
-        proc.init(false);
-
-        if (!proc.isRunning()) {
-            throw SMPHookError.withMessage("Server Process is not running.");
-        }
-
-        String line;
-        while (!(line = proc.rawOutput()).equals(ServerProcess.EOF)) {
-            System.out.println(line);
+        while (true) {
+            System.out.println(TaskExecutor.execute(() -> System.out.println("hi")));
         }
     }
 }

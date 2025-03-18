@@ -153,6 +153,19 @@ public final class SMPHookError extends Error {
     }
 
     /**
+     * <p>Executes the test {@code t} and if it throws an {@link java.lang.Exception} then it will invoke the {@code ifFail} callback.
+     *    Make sure your {@code ifFail} callback does not fail as this can cause unintended behaviour.
+     * </p>
+     * 
+     * @param t - the function that may fail
+     * @param ifFail - the function to invoke upon failure of the {@code t} function
+     */
+    public static void ifFail(Test t, Runnable ifFail) {
+        try { SMPHookError.strictlyRequireNonNull(t, "t").test(); }
+        catch (Exception ignored) { SMPHookError.throwIfFail(ifFail::run); }
+    }
+
+    /**
      * <p>Executes the supplied test block {@code t}, and returns the value of type {@code RETURN_TYPE}.</p>
      * 
      * <p>A <b>propagated</b> {@code SMPHookError} if the test block throws an exception,
