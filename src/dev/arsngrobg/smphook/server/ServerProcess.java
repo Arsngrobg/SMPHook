@@ -111,7 +111,7 @@ public final class ServerProcess {
 
         String initCommand = getInitCommand();
         if (nogui) {
-            initCommand.concat(" nogui");
+            initCommand = initCommand.concat(" nogui");
         }
         String[] commandTokens = initCommand.split("\\s+");
 
@@ -147,10 +147,8 @@ public final class ServerProcess {
             throw SMPHookError.with(ErrorType.IO, "Server process is not running.");
         }
 
-        String cleanedCommand = command.replaceAll("", "\\n");
-
         SMPHookError.throwIfFail(() -> {
-            istream.write(cleanedCommand);
+            istream.write(command);
             istream.newLine();
             istream.flush();
         });

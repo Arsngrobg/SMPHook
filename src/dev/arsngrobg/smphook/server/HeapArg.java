@@ -6,7 +6,7 @@ import static dev.arsngrobg.smphook.SMPHookError.condition;
 import static dev.arsngrobg.smphook.SMPHookError.nullCondition;
 
 /**
- * <p>The {@code HeaepArg} class represents a Java Virtual Machine (JVM) heap allocation argument.
+ * <p>The {@code HeapArg} class represents a Java Virtual Machine (JVM) heap allocation argument.
  *    It consists of an unsigned, non-zero {@code size} and a {@code unit} (defined by {@link HeapArg.Unit} enum).
  * </p>
  * 

@@ -144,6 +144,8 @@ public final class SMPHookError extends Error {
     /**
      * <p>Tests the given executable block of code and consumes the generic {@link java.lang.Exception} if it was thrown.</p>
      * 
+     * <p>The {@link java.lang.Exception} thrown from the code block is not handled, hence <i>consumed</i>.</p>
+     * 
      * @param t - the executable block of code
      */
     public static void consumeException(Test t) {
@@ -228,7 +230,7 @@ public final class SMPHookError extends Error {
      *    The {@code varName} is an optional string value that can provide better error messaging.
      * </p>
      * 
-     * @param     <T> - the type of object to check for {@code null} saftey
+     * @param     <T>   the type of object to check for {@code null} saftey
      * @param     obj - the the object to check for {@code null} safety
      * @param varName - the optional string value to provide to the error if required by this method
      * @return the {@code obj} argument
