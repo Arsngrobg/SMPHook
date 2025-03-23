@@ -149,7 +149,7 @@ public final class TaskExecutor {
         return thread.getState() == Thread.State.TERMINATED;
     }
 
-    /** @return the unique ID of this {@code TaskExewcutor} */
+    /** @return the unique ID of this {@code TaskExecutor} */
     public int getId() {
         return id;
     }
