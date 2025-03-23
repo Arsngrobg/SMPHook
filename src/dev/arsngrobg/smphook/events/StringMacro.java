@@ -19,6 +19,7 @@ import dev.arsngrobg.smphook.SMPHookError;
  * @see    EventType
  */
 public final class StringMacro {
+    // predefined macros
     static {
         define("username", "[A-Za-z0-9_]{3,16}");
     }
