@@ -18,7 +18,8 @@ import java.lang.annotation.RetentionPolicy;
  *    <blockquote><pre>
  *       [%username%] %message%
  *    </pre></blockquote>
- *    Where {@code %username%} & {@code %message%} are specific regex strings from a table of known regex strings (macros).
+ *    Where {@code %username%} & {@code %message%} are string macros
+ *    Anything wrapped with {@code %} are considered string macros, which internally represent regex strings.
  * </p>
  * 
  * <p>These <b>prototype strings</b> can be read during the runtime of SMPHook, and is used to catch events from the server.</p>

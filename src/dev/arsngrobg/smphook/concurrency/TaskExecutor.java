@@ -149,6 +149,11 @@ public final class TaskExecutor {
         return thread.getState() == Thread.State.TERMINATED;
     }
 
+    /** @return the unique ID of this {@code TaskExewcutor} */
+    public int getId() {
+        return id;
+    }
+
     @Override
     public int hashCode() {
         return SMPHook.hashOf(id);
