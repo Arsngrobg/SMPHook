@@ -100,9 +100,8 @@ public sealed interface JVMOption permits JVMOption.Enabled, JVMOption.Assigned 
         public boolean equals(Object obj) {
             if (obj == null) return false;
             if (obj == this) return true;
-            if (obj.getClass() != getClass()) return false;
-            Enabled asEnabledOption = (Enabled) obj;
-            return enabled == asEnabledOption.enabled && name.equals(asEnabledOption.name);
+            if (!(obj instanceof Enabled asEnabled)) return false;
+            return enabled == asEnabled.enabled && name.equals(asEnabled.name);
         }
 
         @Override
@@ -148,9 +147,8 @@ public sealed interface JVMOption permits JVMOption.Enabled, JVMOption.Assigned 
         public boolean equals(Object obj) {
             if (obj == null) return false;
             if (obj == this) return true;
-            if (obj.getClass() != getClass()) return false;
-            Assigned asAssignedOption = (Assigned) obj;
-            return value.equals(asAssignedOption.value) && name.equals(asAssignedOption.name);
+            if (!(obj instanceof Assigned asAssigned)) return false;
+            return value.equals(asAssigned.value) && name.equals(asAssigned.name);
         }
 
         @Override

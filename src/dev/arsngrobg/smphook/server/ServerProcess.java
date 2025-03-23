@@ -239,8 +239,7 @@ public final class ServerProcess {
     public boolean equals(Object obj) {
         if (obj == null) return false;
         if (obj == this) return true;
-        if (getClass() != obj.getClass()) return false;
-        ServerProcess asProc = (ServerProcess) obj;
+        if (!(obj instanceof ServerProcess asProc)) return false;
 
         final BiFunction<HeapArg, HeapArg, Boolean> check = (arg1, arg2) -> {
             if (arg1 == null && arg2 == null)       return true;

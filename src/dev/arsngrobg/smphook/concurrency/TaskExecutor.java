@@ -158,8 +158,7 @@ public final class TaskExecutor {
     public boolean equals(Object obj) {
         if (obj == null) return false;
         if (obj == this) return true;
-        if (getClass() != obj.getClass()) return false;
-        TaskExecutor asExecutor = (TaskExecutor) obj;
+        if (!(obj instanceof TaskExecutor asExecutor)) return false;
         return id == asExecutor.id;
     }
 

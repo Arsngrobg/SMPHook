@@ -353,8 +353,7 @@ public final class SMPHookError extends Error {
     public boolean equals(Object obj) {
         if (obj == null) return false;
         if (obj == this) return true;
-        if (getClass() != obj.getClass()) return false;
-        SMPHookError asError = (SMPHookError) obj;
+        if (!(obj instanceof SMPHookError asError)) return false;
         return type == asError.type && message.equals(asError.message);
     }
 

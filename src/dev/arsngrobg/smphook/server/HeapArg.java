@@ -182,8 +182,7 @@ public final class HeapArg implements Comparable<HeapArg> {
     public boolean equals(Object obj) {
         if (obj == null) return false;
         if (obj == this) return true;
-        if (getClass() != obj.getClass()) return false;
-        HeapArg asArg = (HeapArg) obj;
+        if (!(obj instanceof HeapArg asArg)) return false;
         return compareTo(asArg) == 0;
     }
 
