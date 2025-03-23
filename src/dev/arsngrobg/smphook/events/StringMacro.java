@@ -21,7 +21,9 @@ import dev.arsngrobg.smphook.SMPHookError;
 public final class StringMacro {
     // predefined macros
     static {
-        define("username", "[A-Za-z0-9_]{3,16}");
+        define("username",  "[A-Za-z0-9_]{3,16}");
+        define("init_time", "\\d+\\.\\d{3}");
+        define("n",         "\\d+");
     }
 
     private static final Map<String, StringMacro> GLOBALS = new HashMap<>();
