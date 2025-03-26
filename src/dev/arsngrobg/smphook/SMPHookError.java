@@ -126,22 +126,6 @@ public final class SMPHookError extends Error {
     }
 
     /**
-     * <p>Asserts that the supplied {@link Test} evaluates to {@code true}.
-     *    If otherwise, throw an {@link java.lang.AssertionError} and wrap it in an {@code SMPHookError}.
-     * </p>
-     * 
-     * @param t - the executable block of code (returning {@link Boolean}) to assert
-     * @throws SMPHookError if the assertion is {@code false}
-     */
-    public static void assertion(SupplyingTest<Boolean> t) throws SMPHookError {
-        SMPHookError.strictlyRequireNonNull(t, "t");
-
-        try { assert t.test(); }
-        catch (AssertionError err) { SMPHookError.withCause(err); }
-        catch (Exception e) {}
-    }
-
-    /**
      * <p>Tests the given executable block of code and consumes the generic {@link java.lang.Exception} if it was thrown.</p>
      * 
      * <p>The {@link java.lang.Exception} thrown from the code block is not handled, hence <i>consumed</i>.</p>
@@ -297,6 +281,17 @@ public final class SMPHookError extends Error {
         sb.setLength(sb.length() - 4);
 
         return SMPHookError.with(ErrorType.PROPAGATED, sb.toString());
+    }
+
+    /**
+     * <p>Instantiates a new {@code SMPHookError} instance of the type <b>GENERIC</b> with the supplied {@code format} and {@code args}</p>
+     * 
+     * @param format - the format string for the message
+     * @param   args - the argumets to format in place of the message
+     * @return a new <b>GENERIC</b> {@code SMPHookError} instance
+     */
+    public static SMPHookError withMessage(String format, Object... args) {
+        return SMPHookError.withMessage(String.format(format, args));
     }
 
     /**
