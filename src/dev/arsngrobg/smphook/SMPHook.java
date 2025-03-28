@@ -1,10 +1,16 @@
 package dev.arsngrobg.smphook;
 
-import java.util.Scanner;
+import com.googlecode.lanterna.SGR;
+import com.googlecode.lanterna.TerminalPosition;
+import com.googlecode.lanterna.TerminalSize;
+import com.googlecode.lanterna.TextColor;
+import com.googlecode.lanterna.graphics.TextGraphics;
+import com.googlecode.lanterna.input.KeyStroke;
+import com.googlecode.lanterna.input.KeyType;
+import com.googlecode.lanterna.terminal.DefaultTerminalFactory;
+import com.googlecode.lanterna.terminal.Terminal;
+import com.googlecode.lanterna.terminal.virtual.DefaultVirtualTerminal;
 
-import dev.arsngrobg.smphook.concurrency.TaskExecutor;
-import dev.arsngrobg.smphook.events.BaseEventType;
-import dev.arsngrobg.smphook.events.CustomEventType;
 import dev.arsngrobg.smphook.server.HeapArg;
 import dev.arsngrobg.smphook.server.JVMOption;
 import dev.arsngrobg.smphook.server.ServerProcess;
@@ -79,7 +85,7 @@ public final class SMPHook {
         return result;
     }
 
-    public static void main(String[] args) throws SMPHookError {
+    public static void runTUI() throws SMPHookError {
         HeapArg min = HeapArg.ofSize(2,  Unit.GIGABYTE);
         HeapArg max = HeapArg.ofSize(10, Unit.GIGABYTE);
         JVMOption[] options = {
@@ -91,28 +97,46 @@ public final class SMPHook {
             JVMOption.assigned("G1HeapRegionSize", "32M")
         };
 
-        System.out.println(CustomEventType.custom("_MY_CUSTOME2_EVENT", "test prototype"));
-        System.out.println(CustomEventType.derived(BaseEventType.SERVER_OVERLOADED, "test prototype"));
+        //ServerProcess proc = ServerProcess.spawn("smp\\server.jar", min, max, options);
+        //proc.init(true);
 
-        if (true) {
-            return;
-        }
+        SMPHookError.throwIfFail(() -> {
+            Terminal term = new DefaultTerminalFactory().createTerminal();
+            TextGraphics graphics = term.newTextGraphics();
 
-        ServerProcess proc = ServerProcess.spawn("smp\\server.jar", min, max, options);
-        proc.init(true);
+            term.addResizeListener((t, s) -> {
+                SMPHookError.consumeException(t::bell);
+                graphics.fillRectangle(TerminalPosition.TOP_LEFT_CORNER, s, ' ');
+                SMPHookError.consumeException(() -> term.setCursorPosition(TerminalPosition.TOP_LEFT_CORNER));
+                SMPHookError.consumeException(term::flush);
+            });
 
-        TaskExecutor.execute(() -> {
-            try (Scanner scanner = new Scanner(System.in)) {
-                while (proc.isRunning()) {
-                    String input = scanner.nextLine();
-                    proc.rawInput(input);
+            term.enterPrivateMode();
+            // start
+
+            graphics.setBackgroundColor(TextColor.Indexed.fromRGB(15, 15, 15));
+            graphics.fillRectangle(new TerminalPosition(0, 0), term.getTerminalSize(), ' ');
+            term.setCursorPosition(0, 0);
+
+            boolean running = true;
+            while (running) {
+                KeyStroke keyStroke = term.pollInput();
+                if (keyStroke != null && keyStroke.getKeyType() == KeyType.Character) {
+                    term.putCharacter(keyStroke.getCharacter());
+                    term.flush();
                 }
+    
+                SMPHookError.consumeException(() -> Thread.sleep(16));
             }
-        });
 
-        String line;
-        while (!(line = proc.rawOutput()).equals(ServerProcess.EOF)) {
-            System.out.println(line);
-        }
+            // end
+            term.exitPrivateMode();
+
+            term.close();
+        });
+    }
+
+    public static void main(String[] args) throws SMPHookError {
+        runTUI();
     }
 }
