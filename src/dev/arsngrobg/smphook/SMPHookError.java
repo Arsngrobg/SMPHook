@@ -1,5 +1,7 @@
 package dev.arsngrobg.smphook;
 
+import java.util.function.Supplier;
+
 /**
  * <p>The {@code SMPHookError} class represents an error in the <i>SMPHook</i> system.
  *    This class encapsulates various error types and provides factory methods to create errors.
@@ -18,6 +20,12 @@ package dev.arsngrobg.smphook;
  * </p>
  * 
  * <p>It extends the {@link java.lang.Error} class, so it is said that any unusual or illegal state is considered un-recoverable.</p>
+ * 
+ * <p>This class also acts as an error handling class as it also provides methods for getting around erroneous states.
+ *    For example: the {@link #ifFail(Test, Runnable)} or {@link #ifFail(SupplyingTest, Supplier)} methods use callback functions if the initial function fails,
+ *    or for ignoring non-serious exceptions using {@link #consumeException(Test)}.
+ *    These are implemented to remove ugly try-catch statements across the source code.
+ * </p>
  * 
  * @author Arsngrobg
  * @since  1.0
@@ -139,6 +147,22 @@ public final class SMPHookError extends Error {
     }
 
     /**
+     * <p>Executes the test {@code t} and returns the value from its result.
+     *    If the test {@code t} fails (i.e. throws an exception) its callback function {@code ifFail} will execute.
+     *    The {@code ifFail} callback is also a supplying function.
+     * </p>
+     * 
+     * @param <T>      the return type of both the supplying test {@code t} and the {@code ifFail} callback
+     * @param   t    - the initial test to perform (returning the type {@code T})
+     * @param ifFail - the callback function to execute if {@code t} fails (also returning the type {@code T})
+     * @return the value returned from either the {@code t} supplying test or the {@code ifFail} callback
+     */
+    public static <T> T ifFail(SupplyingTest<T> t, Supplier<T> ifFail) {
+        try { return SMPHookError.strictlyRequireNonNull(t, "t").test(); }
+        catch (Exception ignored) { return SMPHookError.throwIfFail(ifFail::get); }
+    }
+
+    /**
      * <p>Executes the test {@code t} and if it throws an {@link java.lang.Exception} then it will invoke the {@code ifFail} callback.
      *    Make sure your {@code ifFail} callback does not fail as this can cause unintended behaviour.
      * </p>
@@ -186,7 +210,7 @@ public final class SMPHookError extends Error {
     }
 
     /**
-     * <p>This is a safer alternative to {@link SMPHookError#strictlyRequireNonNull(Object, String)}.</p>
+     * <p>This is an alternative to {@link SMPHookError#strictlyRequireNonNull(Object, String)}.</p>
      * 
      * <p>This method checks for {@code null} safety with the value of {@code obj}.
      *    If {@code obj} is {@code null} then the {@code alt}ernative object is returned.
@@ -208,13 +232,39 @@ public final class SMPHookError extends Error {
     }
 
     /**
+     * <p>This method checks for {@code null} safety for each element of the supplied {@code arr}.
+     *    If any element in the {@code arr} is {@code null} then a <b>NULL_REFERENCE</b> {@code SMPHookError} is thrown.
+     *    The {@code arrName} is an optional string value to provide better error messages.
+     * </p>
+     * 
+     * @param <T> the type of the array to check for null safety
+     * @param arr - the array to check for {@code null} values
+     * @param arrName - the optional string value to provide to the error if required by this method
+     * @return the {@code arr} argument
+     * @throws SMPHookError a <b>NULL_REFERENCE</b> {@code SMPHookError} if any element of {@code arr} is {@code null}
+     */
+    public static <T> T[] strictlyRequireNonNull(T[] arr, String arrName) throws SMPHookError {
+        for (int idx = 0; idx < arr.length; idx++) {
+            T element = arr[idx];
+            if (element != null) continue;
+
+            String errMsg;
+            if (arrName == null) errMsg = String.format("Array element [%d]", idx);
+            else                 errMsg = String.format("%s[%d]", arrName, idx);
+            throw SMPHookError.nullReference(errMsg);
+        }
+
+        return arr;
+    }
+
+    /**
      * <p>This is a strict {@code null} safety validator method.</p>
      * 
      * <p>If the {@code obj} argument is {@code null} then this method will throw a <b>NULL_REFERENCE</b> {@code SMPHookError}.
      *    The {@code varName} is an optional string value that can provide better error messaging.
      * </p>
      * 
-     * @param     <T>   the type of object to check for {@code null} saftey
+     * @param     <T>   the type of object to check for {@code null} safety
      * @param     obj - the the object to check for {@code null} safety
      * @param varName - the optional string value to provide to the error if required by this method
      * @return the {@code obj} argument

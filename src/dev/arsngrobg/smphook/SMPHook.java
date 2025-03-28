@@ -3,6 +3,8 @@ package dev.arsngrobg.smphook;
 import java.util.Scanner;
 
 import dev.arsngrobg.smphook.concurrency.TaskExecutor;
+import dev.arsngrobg.smphook.events.BaseEventType;
+import dev.arsngrobg.smphook.events.CustomEventType;
 import dev.arsngrobg.smphook.server.HeapArg;
 import dev.arsngrobg.smphook.server.JVMOption;
 import dev.arsngrobg.smphook.server.ServerProcess;
@@ -88,6 +90,13 @@ public final class SMPHook {
             JVMOption.assigned("MaxGCPauseMillis", 50),
             JVMOption.assigned("G1HeapRegionSize", "32M")
         };
+
+        System.out.println(CustomEventType.custom("_MY_CUSTOME2_EVENT", "test prototype"));
+        System.out.println(CustomEventType.derived(BaseEventType.SERVER_OVERLOADED, "test prototype"));
+
+        if (true) {
+            return;
+        }
 
         ServerProcess proc = ServerProcess.spawn("smp\\server.jar", min, max, options);
         proc.init(true);

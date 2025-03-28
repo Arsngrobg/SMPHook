@@ -42,6 +42,9 @@ public enum BaseEventType implements EventType {
     @EquivalentServerOutput   ("Banned %username%: %reason%")
     PLAYER_BANNED             (string, string),
 
+    @EquivalentServerOutput   ("[%username%] %message%")
+    PLAYER_MESSAGE            (string, string),
+
     @EquivalentServerOutput   ("%username% moved too quickly! %x%,%y%,%z%")
     PLAYER_MOVED_TOO_QUICKLY  (string, f32, f32, f32),
 

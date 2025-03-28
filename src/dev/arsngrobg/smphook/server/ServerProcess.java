@@ -66,7 +66,7 @@ public final class ServerProcess {
             throw SMPHookError.withMessage("Mismatched heap arguments.");
         }
 
-        options = Stream.of(options).filter(o -> o != null).toArray(JVMOption[]::new);
+        options = SMPHookError.strictlyRequireNonNull(options, "options");
 
         return new ServerProcess(serverJarFile, minHeap, maxHeap, options);
     }
