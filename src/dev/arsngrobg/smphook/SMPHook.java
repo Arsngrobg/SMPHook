@@ -1,16 +1,5 @@
 package dev.arsngrobg.smphook;
 
-import com.googlecode.lanterna.SGR;
-import com.googlecode.lanterna.TerminalPosition;
-import com.googlecode.lanterna.TerminalSize;
-import com.googlecode.lanterna.TextColor;
-import com.googlecode.lanterna.graphics.TextGraphics;
-import com.googlecode.lanterna.input.KeyStroke;
-import com.googlecode.lanterna.input.KeyType;
-import com.googlecode.lanterna.terminal.DefaultTerminalFactory;
-import com.googlecode.lanterna.terminal.Terminal;
-import com.googlecode.lanterna.terminal.virtual.DefaultVirtualTerminal;
-
 import dev.arsngrobg.smphook.server.HeapArg;
 import dev.arsngrobg.smphook.server.JVMOption;
 import dev.arsngrobg.smphook.server.ServerProcess;
@@ -97,43 +86,8 @@ public final class SMPHook {
             JVMOption.assigned("G1HeapRegionSize", "32M")
         };
 
-        //ServerProcess proc = ServerProcess.spawn("smp\\server.jar", min, max, options);
-        //proc.init(true);
-
-        SMPHookError.throwIfFail(() -> {
-            Terminal term = new DefaultTerminalFactory().createTerminal();
-            TextGraphics graphics = term.newTextGraphics();
-
-            term.addResizeListener((t, s) -> {
-                SMPHookError.consumeException(t::bell);
-                graphics.fillRectangle(TerminalPosition.TOP_LEFT_CORNER, s, ' ');
-                SMPHookError.consumeException(() -> term.setCursorPosition(TerminalPosition.TOP_LEFT_CORNER));
-                SMPHookError.consumeException(term::flush);
-            });
-
-            term.enterPrivateMode();
-            // start
-
-            graphics.setBackgroundColor(TextColor.Indexed.fromRGB(15, 15, 15));
-            graphics.fillRectangle(new TerminalPosition(0, 0), term.getTerminalSize(), ' ');
-            term.setCursorPosition(0, 0);
-
-            boolean running = true;
-            while (running) {
-                KeyStroke keyStroke = term.pollInput();
-                if (keyStroke != null && keyStroke.getKeyType() == KeyType.Character) {
-                    term.putCharacter(keyStroke.getCharacter());
-                    term.flush();
-                }
-    
-                SMPHookError.consumeException(() -> Thread.sleep(16));
-            }
-
-            // end
-            term.exitPrivateMode();
-
-            term.close();
-        });
+        ServerProcess proc = ServerProcess.spawn("smp\\server.jar", min, max, options);
+        proc.init(true);
     }
 
     public static void main(String[] args) throws SMPHookError {
