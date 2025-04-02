@@ -1,5 +1,6 @@
 package dev.arsngrobg.smphook;
 
+import java.util.function.Consumer;
 import java.util.function.Supplier;
 
 /**
@@ -76,6 +77,19 @@ public final class SMPHookError extends Error {
         RETURN_TYPE test() throws Exception;
     }
 
+    /**
+     * <p>A function that handles an {@link Exception} thrown by a method or functions.</p>
+     */
+    @FunctionalInterface
+    public interface ExceptionHandler {
+        /**
+         * <p>Handles the {@link Exception} thrown by a method or function</p>
+         * 
+         * @param e - the exception that was thrown
+         */
+        void handle(Exception e);
+    }
+
     /** <p>A simple Data Transfer Object (DTO) for a conditional case used in {@link #caseThrow(ConditionalCase...)} </p> */
     public record ConditionalCase(SupplyingTest<Boolean> test, SMPHookError ifTrue) {}
 
@@ -141,9 +155,21 @@ public final class SMPHookError extends Error {
      * @param t - the executable block of code
      */
     public static void consumeException(Test t) {
-        SMPHookError.strictlyRequireNonNull(t, "t");
+        try { SMPHookError.strictlyRequireNonNull(t, "t").test(); }
+        catch (Exception ignored) {}
+    }
 
-        try { t.test(); } catch (Exception ignored) {}
+    /**
+     * <p>Executes the test {@code t} and if it fails invokes its {@code callback} exception handler function.
+     *    The callback function must not fail as this is the function which should gracefully exit out of an erroneous state.
+     * </p>
+     * 
+     * @param        t - the function that may fail
+     * @param callback - the safe {@link ExceptionHandler} function if {@code t} fails
+     */
+    public static void ifFailThen(Test t, ExceptionHandler callback) {
+        try { SMPHookError.strictlyRequireNonNull(t, "t").test(); }
+        catch (Exception e) { callback.handle(e); }
     }
 
     /**
@@ -152,8 +178,8 @@ public final class SMPHookError extends Error {
      *    The {@code ifFail} callback is also a supplying function.
      * </p>
      * 
-     * @param <T>      the return type of both the supplying test {@code t} and the {@code ifFail} callback
-     * @param   t    - the initial test to perform (returning the type {@code T})
+     * @param    <T>   the return type of both the supplying test {@code t} and the {@code ifFail} callback
+     * @param      t - the initial test to perform (returning the type {@code T})
      * @param ifFail - the callback function to execute if {@code t} fails (also returning the type {@code T})
      * @return the value returned from either the {@code t} supplying test or the {@code ifFail} callback
      */
@@ -167,12 +193,12 @@ public final class SMPHookError extends Error {
      *    Make sure your {@code ifFail} callback does not fail as this can cause unintended behaviour.
      * </p>
      * 
-     * @param t - the function that may fail
+     * @param      t - the function that may fail
      * @param ifFail - the function to invoke upon failure of the {@code t} function
      */
     public static void ifFail(Test t, Runnable ifFail) {
         try { SMPHookError.strictlyRequireNonNull(t, "t").test(); }
-        catch (Exception ignored) { SMPHookError.throwIfFail(ifFail::run); }
+        catch (Exception e) { SMPHookError.throwIfFail(ifFail::run); }
     }
 
     /**
@@ -204,9 +230,8 @@ public final class SMPHookError extends Error {
      * @throws SMPHookError if the {@code t} is {@code null} or the code block throws an exception
      */
     public static void throwIfFail(Test t) throws SMPHookError {
-        SMPHookError.strictlyRequireNonNull(t, "t");
-
-        try { t.test(); } catch (Exception e) { throw SMPHookError.withCause(e); }
+        try { SMPHookError.strictlyRequireNonNull(t, "t").test(); }
+        catch (Exception e) { throw SMPHookError.withCause(e); }
     }
 
     /**

@@ -22,25 +22,13 @@ package dev.arsngrobg.smphook.events;
 @FunctionalInterface
 public interface TypeWrapper<T> {
     /** <p>The standard {@code TypeWrapper} for {@link java.lang.String}.</p> */
-    public static final TypeWrapper<String>  string = String ::valueOf;
-
-    /** <p>The standard {@code TypeWrapper} for {@link java.lang.Long}.</p> */
-    public static final TypeWrapper<Long>    i64    = Long   ::valueOf;
-
-    /** <p>The standard {@code TypeWrapper} for {@link java.lang.Integer}.</p> */
-    public static final TypeWrapper<Integer> i32    = Integer::valueOf;
-
-    /** <p>The standard {@code TypeWrapper} for {@link java.lang.Short}.</p> */
-    public static final TypeWrapper<Short>   i16    = Short  ::valueOf;
-
-    /** <p>The standard {@code TypeWrapper} for {@link java.lang.Byte}.</p> */
-    public static final TypeWrapper<Byte>    i8     = Byte   ::valueOf;
+    public static final TypeWrapper<String>  string = String::valueOf;
 
     /** <p>The standard {@code TypeWrapper} for {@link java.lang.Double}.</p> */
-    public static final TypeWrapper<Double>  f64    = Double ::valueOf;
+    public static final TypeWrapper<Double>  number = Double::valueOf;
 
-    /** <p>The standard {@code TypeWrapper} for {@link java.lang.Float}.</p> */
-    public static final TypeWrapper<Float>   f32    = Float  ::valueOf;
+    /** <p>The standard {@code TypeWrapper} for {@link java.lang.Boolean}.</p> */
+    public static final TypeWrapper<Boolean> bool   = Boolean::valueOf;
 
     /**
      * <p>Transforms the given {@code string}, which is a substring of the output from the server, into the type {@code T}.</p>

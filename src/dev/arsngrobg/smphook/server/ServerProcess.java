@@ -8,7 +8,6 @@ import java.io.OutputStreamWriter;
 import java.util.Arrays;
 import java.util.Optional;
 import java.util.function.BiFunction;
-import java.util.stream.Stream;
 
 import dev.arsngrobg.smphook.SMPHook;
 import dev.arsngrobg.smphook.SMPHookError;

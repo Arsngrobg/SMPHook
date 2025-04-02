@@ -10,7 +10,7 @@ import java.lang.annotation.RetentionPolicy;
  * 
  * <p>The <b>prototype strings</b> are the portion of the server output that is displayed to the player(s) currently playing on the server.</p>
  * 
- * <p>For example, a {@link EventType#PLAYER_MESSAGE} event can look like this:
+ * <p>For example, a {@link BaseEventType#PLAYER_MESSAGE} event can look like this:
  *    <blockquote><pre>
  *       [Arsngrobg] Hello, World!
  *    </pre></blockquote>
@@ -20,6 +20,7 @@ import java.lang.annotation.RetentionPolicy;
  *    </pre></blockquote>
  *    Where {@code %username%} & {@code %message%} are string macros
  *    Anything wrapped with {@code %} are considered string macros, which internally represent regex strings.
+ *    If you want to use the {@code %} literal, use the string {@code %%} instead.
  * </p>
  * 
  * <p>These <b>prototype strings</b> can be read during the runtime of SMPHook, and is used to catch events from the server.</p>

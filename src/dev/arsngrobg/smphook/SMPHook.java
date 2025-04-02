@@ -1,5 +1,8 @@
 package dev.arsngrobg.smphook;
 
+import java.util.Scanner;
+
+import dev.arsngrobg.smphook.concurrency.TaskExecutor;
 import dev.arsngrobg.smphook.server.HeapArg;
 import dev.arsngrobg.smphook.server.JVMOption;
 import dev.arsngrobg.smphook.server.ServerProcess;
@@ -88,6 +91,17 @@ public final class SMPHook {
 
         ServerProcess proc = ServerProcess.spawn("smp\\server.jar", min, max, options);
         proc.init(true);
+
+        TaskExecutor io = TaskExecutor.waiting(() -> {
+            SMPHookError.ifFailThen(() -> {
+                Scanner input = new Scanner(System.in);
+                while (proc.isRunning()) {
+                    String command = input.nextLine();
+                    proc.rawInput(command);
+                }
+                input.close();
+            }, e -> proc.rawInput("stop"));
+        });
     }
 
     public static void main(String[] args) throws SMPHookError {

@@ -8,13 +8,12 @@ import dev.arsngrobg.smphook.SMPHookError;
  *    Each positional argument should be queried through the abstract methods provided through this interface and should not be publically accessible.
  * </p>
  * 
- * <p>The {@link BaseEventType} enum and {@link CustomEventType} class implement this interface, and both serve their different purposes as event types.</p>
+ * <p>The {@link BaseEventType} enum implement this interface.</p>
  * 
  * @author Arsngrobg
  * @since  1.0
  * @see    TypeWrapper
  * @see    BaseEventType
- * @see    CustomEventType
  */
 public interface EventType {
     /**

@@ -89,15 +89,15 @@ public final class TaskExecutor {
         SMPHookError.strictlyRequireNonNull(t, "t");
 
         Runnable wrapper = () -> {
-            SMPHookError.ifFail(
+            SMPHookError.ifFailThen(
                 t::execute,
-                () -> System.out.println("TaskExecutor task failed.")
+                e -> System.out.println("TaskExecutor task failed.")
             );
 
             if (onFinish != null) {
-                SMPHookError.ifFail(
+                SMPHookError.ifFailThen(
                     onFinish::execute,
-                    () -> System.out.println("TaskExecutor onFinish callback failed.")
+                    e -> System.out.println("TaskExecutor onFinish callback failed.")
                 );
             }
         };
