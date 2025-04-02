@@ -50,6 +50,23 @@ public enum BaseEventType implements EventType {
     @EquivalentServerOutput   ("%vehicle% (vehicle of %username%) moved too quickly! %x%,%y%,%z%")
     VEHICLE_MOVED_TOO_QUICKLY (string, string, number, number, number);
 
+    // macro definitions
+    static {
+        StringMacro.define("init_time", "\\d+\\.\\d{3}");
+        StringMacro.define("n",         "\\d+");
+        StringMacro.define("millis",    "\\d+");
+        StringMacro.define("ticks",     "\\d+");
+        StringMacro.define("message",   "\\.");
+        StringMacro.define("username",  "[A-Za-z0-9]{3,16}");
+        StringMacro.define("uuid",      "[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}");
+        StringMacro.define("ip",        "TODO"); // TODO: IP capture
+        StringMacro.define("port",      "\\d+");
+        StringMacro.define("entity_id", "\\d+");
+        StringMacro.define("x",         "\\d+\\.\\d+");
+        StringMacro.define("y",         "\\d+\\.\\d+");
+        StringMacro.define("z",         "\\d+\\.\\d+");
+    }
+
     private final TypeWrapper<?>[] args;
 
     BaseEventType(TypeWrapper<?>... args) {
