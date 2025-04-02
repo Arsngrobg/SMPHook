@@ -90,7 +90,6 @@ public final class SMPHook {
         };
 
         ServerProcess proc = ServerProcess.spawn("smp\\server.jar", min, max, options);
-        proc.init(true);
 
         TaskExecutor io = TaskExecutor.waiting(() -> {
             SMPHookError.ifFailThen(() -> {
@@ -102,6 +101,14 @@ public final class SMPHook {
                 input.close();
             }, e -> proc.rawInput("stop"));
         });
+
+        proc.init(true);
+        io.begin();
+
+        String line;
+        while (!(line = proc.rawOutput()).equals(ServerProcess.EOF)) {
+            System.out.println(line);
+        }
     }
 
     public static void main(String[] args) throws SMPHookError {
