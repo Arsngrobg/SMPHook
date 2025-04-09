@@ -96,7 +96,7 @@ public final class ServerProcess {
      * 
      * <p>If the server process is already running, an {@link SMPHookError} is thrown.</p>
      * 
-     * <p>I/O operations can be performed on this process with {@link #rawInput(String) and {@link #rawOutput()}.</p>
+     * <p>I/O operations can be performed on this process with {@link #rawInput(String)} and {@link #rawOutput()}.</p>
      * 
      * @param nogui - whether to display the pre-packaged GUI on initialisation
      * @throws SMPHookError if the process is already running

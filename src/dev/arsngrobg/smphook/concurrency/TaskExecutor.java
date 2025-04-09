@@ -50,7 +50,7 @@ public final class TaskExecutor {
      */
     public static TaskExecutor waiting(Task t) throws SMPHookError {
         TaskExecutor executor = getNextAvailableExecutor();
-        executor.newTask(t);
+        executor.submitTask(t);
         return executor;
     }
 
@@ -85,7 +85,8 @@ public final class TaskExecutor {
         this.id = id;
     }
 
-    void newTask(Task t) throws SMPHookError {
+    // local method for submitting a new task
+    void submitTask(Task t) throws SMPHookError {
         SMPHookError.strictlyRequireNonNull(t, "t");
 
         Runnable wrapper = () -> {

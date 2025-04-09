@@ -3,6 +3,7 @@ package dev.arsngrobg.smphook;
 import java.util.Scanner;
 
 import dev.arsngrobg.smphook.concurrency.TaskExecutor;
+import dev.arsngrobg.smphook.discord.DiscordWebhook;
 import dev.arsngrobg.smphook.server.HeapArg;
 import dev.arsngrobg.smphook.server.JVMOption;
 import dev.arsngrobg.smphook.server.ServerProcess;
@@ -90,20 +91,26 @@ public final class SMPHook {
         };
 
         ServerProcess proc = ServerProcess.spawn("smp\\server.jar", min, max, options);
+        System.out.println(proc.getInitCommand());
 
         TaskExecutor io = TaskExecutor.waiting(() -> {
-            SMPHookError.ifFailThen(() -> {
-                Scanner input = new Scanner(System.in);
-                while (proc.isRunning()) {
-                    String command = input.nextLine();
-                    proc.rawInput(command);
-                }
-                input.close();
-            }, e -> proc.rawInput("stop"));
+            Scanner input = new Scanner(System.in);
+            while (proc.isRunning()) {
+                String command = input.nextLine();
+                proc.rawInput(command);
+            }
+            input.close();
         });
 
         proc.init(true);
         io.begin();
+
+        TaskExecutor.execute(() -> {
+            while (true) {
+                SMPHookError.consumeException(() -> Thread.sleep(3000));
+                proc.rawInput("say Hello, World!");
+            }
+        });
 
         String line;
         while (!(line = proc.rawOutput()).equals(ServerProcess.EOF)) {

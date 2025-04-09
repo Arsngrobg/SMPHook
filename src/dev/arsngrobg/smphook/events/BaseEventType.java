@@ -65,7 +65,7 @@ public enum BaseEventType implements EventType {
         StringMacro.define("x",         "\\d+\\.\\d+");
         StringMacro.define("y",         "\\d+\\.\\d+");
         StringMacro.define("z",         "\\d+\\.\\d+");
-        StringMacro.define("vehicle", "\\.+");
+        StringMacro.define("vehicle",   "\\.+");
     }
 
     private final TypeWrapper<?>[] args;
