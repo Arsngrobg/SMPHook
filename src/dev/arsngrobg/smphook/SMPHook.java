@@ -119,6 +119,8 @@ public final class SMPHook {
     }
 
     public static void main(String[] args) throws SMPHookError {
-        runTUI();
+        //runTUI();
+        var webhook = DiscordWebhook.fromURL("https://discord.com/api/webhooks/1359366493564960838/bd6LNz2eQbMpZGr0NX1anbI3LLcA7aN2NFJ6j3v-iRrEtcfh747t7dHOPLnXJrBBmxK_");
+        System.out.println(webhook.getLastResponse());
     }
 }

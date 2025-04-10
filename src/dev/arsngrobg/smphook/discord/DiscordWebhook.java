@@ -8,6 +8,8 @@ import java.nio.charset.StandardCharsets;
 
 import dev.arsngrobg.smphook.SMPHook;
 import dev.arsngrobg.smphook.SMPHookError;
+import dev.arsngrobg.smphook.SMPHookError.ErrorType;
+
 import static dev.arsngrobg.smphook.SMPHookError.condition;
 import static dev.arsngrobg.smphook.SMPHookError.nullCondition;
 
@@ -23,21 +25,35 @@ public final class DiscordWebhook {
     /**
      * <p>Parses the supplied {@code url} as if it was a valid Discord Webhook URL.</p>
      * 
-     * <p>If the supplied {@code url} is not a valid Discord Webhook then this method throws an {@link SMPHookError}.</p>
+     * <p>If the supplied {@code url} is not a valid Discord Webhook then this method throws an {@link SMPHookError}.
+     *    This either means that the {@code url} is a malformed Discord webhook URL, or the link does not point to an existing webhook.
+     *    Even if this webhook has made too many requests this method excepts it and will return the webhhook.
+     * </p>
      * 
      * @param url - a valid Discord Webhook URL
      * @return a new {@code DiscordWebhook} object
-     * @throws SMPHookError if the supplied {@code url} is not a valid Discord Webhook URL
+     * @throws SMPHookError if the supplied {@code url} is a malformed Discord webhook URL or unable to authenticate
      */
     public static DiscordWebhook fromURL(String url) throws SMPHookError {
         SMPHookError.caseThrow(
             nullCondition(url, "url"),
-            condition(() -> !url.matches(DiscordWebhook.REGEX), SMPHookError.withMessage("Supplied URL: '%s' is not a valid Discord Webhook URL."))
+            condition(() -> !url.matches(DiscordWebhook.REGEX), SMPHookError.withMessage("Supplied URL: '%s' is a malformed Discord webhook URL.", url))
         );
 
         URL asUrlObj = SMPHookError.throwIfFail(() -> new URI(url).toURL());
+        DiscordWebhook webhook = new DiscordWebhook(asUrlObj);
 
-        return new DiscordWebhook(asUrlObj);
+        SMPHookError.throwIfFail(() -> {
+            HttpURLConnection connection = (HttpURLConnection) asUrlObj.openConnection();
+            connection.setRequestMethod(REQUEST_GET);
+
+            int response = connection.getResponseCode();
+            if (response != RESPONSE_OK) {
+                throw SMPHookError.with(ErrorType.IO, "The supplied Discord webhook URL could not be verified.");
+            }
+        });
+
+        return webhook;
     }
 
     /**
@@ -46,6 +62,7 @@ public final class DiscordWebhook {
      * <p><a href="https://discord.com/developers/docs/topics/opcodes-and-status-codes">Reference</a></p>
      */
     public static final int
+        NO_RESPONSE                  = 0,
         RESPONSE_OK                  = 200,
         RESPONSE_CREATED             = 201,
         RESPONSE_NO_CONTENT          = 204,
@@ -60,9 +77,10 @@ public final class DiscordWebhook {
 
     // constants for network requests
     private static final String
-        REQUEST_TYPE         = "POST",
-        REQUEST_PROPERTY     = "Content-Type",
-        REQUEST_CONTENT_TYPE = "application/json";
+        REQUEST_POST              = "POST",
+        REQUEST_GET               = "GET",
+        REQUEST_POST_PROPERTY     = "Content-Type",
+        REQUEST_POST_CONTENT_TYPE = "application/json";
 
     // constants for the bounds for subtrings of the URL
     private static final int
@@ -72,7 +90,7 @@ public final class DiscordWebhook {
         TOKEN_END   = TOKEN_START + 128;
 
     private final URL url;
-    private int lastResponse = RESPONSE_OK;
+    private int lastResponse = NO_RESPONSE;
 
     private DiscordWebhook(URL url) {
         this.url = url;
@@ -98,8 +116,8 @@ public final class DiscordWebhook {
 
         return SMPHookError.throwIfFail(() -> {
             HttpURLConnection connection = (HttpURLConnection) url.openConnection();
-            connection.setRequestMethod(REQUEST_TYPE);
-            connection.setRequestProperty(REQUEST_PROPERTY, REQUEST_CONTENT_TYPE);
+            connection.setRequestMethod(REQUEST_POST);
+            connection.setRequestProperty(REQUEST_POST_PROPERTY, REQUEST_POST_CONTENT_TYPE);
             connection.setDoOutput(true);
             
             try (OutputStream ostream = connection.getOutputStream()) {
@@ -115,17 +133,17 @@ public final class DiscordWebhook {
         });
     }
 
-    /** @return the unique ID of this Discord Webhook */
+    /** @return the unique ID of this Discord webhook */
     public String getID() {
         return getURL().substring(ID_START, ID_END);
     }
 
-    /** @return the unique instance token for the given Discord Webhook */
+    /** @return the unique instance token for the given Discord webhook */
     public String getToken() {
         return getURL().substring(TOKEN_START, TOKEN_END);
     }
 
-    /** @return the fully-qualified Discord Webhook URL */
+    /** @return the fully-qualified Discord webhook URL */
     public String getURL() {
         return url.toString();
     }
@@ -133,7 +151,7 @@ public final class DiscordWebhook {
     /**
      * <p>The return value of this method is determined by the state after invoking the {@link #post(String)} method.</p>
      * 
-     * @return the last response code of this Discord Webhook
+     * @return the last response code of this Discord webhook
      */
     public int getLastResponse() {
         return lastResponse;
