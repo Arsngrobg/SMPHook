@@ -1,4 +1,4 @@
-package dev.arsngrobg.smphook.events;
+package dev.arsngrobg.smphook.core.events;
 
 /**
  * <p>The {@code TypeWrapper} interface is a functional interface that transforms a substring into the given generic type {@code T}.</p>

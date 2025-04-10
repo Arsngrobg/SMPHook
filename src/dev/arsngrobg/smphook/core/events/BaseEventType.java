@@ -1,7 +1,7 @@
-package dev.arsngrobg.smphook.events;
+package dev.arsngrobg.smphook.core.events;
 
 import dev.arsngrobg.smphook.SMPHookError;
-import static dev.arsngrobg.smphook.events.TypeWrapper.*;
+import static dev.arsngrobg.smphook.core.events.TypeWrapper.*;
 
 /**
  * <p>The {@code BaseEventType} enum consists of the default event types captured from vanilla Minecraft servers.

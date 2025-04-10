@@ -1,4 +1,4 @@
-package dev.arsngrobg.smphook.events;
+package dev.arsngrobg.smphook.core.events;
 
 import static dev.arsngrobg.smphook.SMPHookError.condition;
 import static dev.arsngrobg.smphook.SMPHookError.nullCondition;

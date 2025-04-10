@@ -1,4 +1,4 @@
-package dev.arsngrobg.smphook.discord;
+package dev.arsngrobg.smphook.core.discord;
 
 import java.io.OutputStream;
 import java.net.HttpURLConnection;

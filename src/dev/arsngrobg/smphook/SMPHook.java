@@ -2,12 +2,12 @@ package dev.arsngrobg.smphook;
 
 import java.util.Scanner;
 
-import dev.arsngrobg.smphook.concurrency.TaskExecutor;
-import dev.arsngrobg.smphook.discord.DiscordWebhook;
-import dev.arsngrobg.smphook.server.HeapArg;
-import dev.arsngrobg.smphook.server.JVMOption;
-import dev.arsngrobg.smphook.server.ServerProcess;
-import dev.arsngrobg.smphook.server.HeapArg.Unit;
+import dev.arsngrobg.smphook.core.concurrency.TaskExecutor;
+import dev.arsngrobg.smphook.core.discord.DiscordWebhook;
+import dev.arsngrobg.smphook.core.server.HeapArg;
+import dev.arsngrobg.smphook.core.server.JVMOption;
+import dev.arsngrobg.smphook.core.server.ServerProcess;
+import dev.arsngrobg.smphook.core.server.HeapArg.Unit;
 
 /**
  * <p>The entry point for the program.</p>

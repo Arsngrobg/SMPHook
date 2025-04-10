@@ -1,4 +1,4 @@
-package dev.arsngrobg.smphook.events;
+package dev.arsngrobg.smphook.core.events;
 
 import dev.arsngrobg.smphook.SMPHookError;
 

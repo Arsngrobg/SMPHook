@@ -1,4 +1,4 @@
-package dev.arsngrobg.smphook.concurrency;
+package dev.arsngrobg.smphook.core.concurrency;
 
 /**
  * <p>The {@code Task} interface is a functional interface which a {@link TaskExecutor} executes.</p>

@@ -1,4 +1,4 @@
-package dev.arsngrobg.smphook.server;
+package dev.arsngrobg.smphook.core.server;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;

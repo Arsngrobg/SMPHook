@@ -1,4 +1,4 @@
-package dev.arsngrobg.smphook.concurrency;
+package dev.arsngrobg.smphook.core.concurrency;
 
 import dev.arsngrobg.smphook.SMPHook;
 import dev.arsngrobg.smphook.SMPHookError;

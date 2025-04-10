@@ -1,4 +1,4 @@
-package dev.arsngrobg.smphook.server;
+package dev.arsngrobg.smphook.core.server;
 
 import dev.arsngrobg.smphook.SMPHook;
 import dev.arsngrobg.smphook.SMPHookError;

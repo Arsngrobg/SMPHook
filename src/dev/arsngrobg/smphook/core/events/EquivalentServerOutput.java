@@ -1,4 +1,4 @@
-package dev.arsngrobg.smphook.events;
+package dev.arsngrobg.smphook.core.events;
 
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
