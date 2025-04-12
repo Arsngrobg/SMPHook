@@ -149,7 +149,9 @@ public final class DiscordWebhook {
     }
 
     /**
-     * <p>The return value of this method is determined by the state after invoking the {@link #post(String)} method.</p>
+     * <p>The return value of this method is determined by the state after invoking the {@link #post(String)} method.
+     *    The initial return value of this method is {@link #NO_RESPONSE} ({@value #NO_RESPONSE}).
+     * </p>
      * 
      * @return the last response code of this Discord webhook
      */
