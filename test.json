@@ -1,0 +1,26 @@
+{
+  "jarPath" : "smp\\server.jar",
+  "heapAllocs" : {
+    "min" : "2G",
+    "max" : "10G"
+  },
+  "jvmOptions" : [ {
+    "enabled" : true,
+    "optionName" : "UnlockExperimentalVMOptions"
+  }, {
+    "enabled" : true,
+    "optionName" : "UseG1GC"
+  }, {
+    "value" : "20",
+    "optionName" : "G1NewSizePercent"
+  }, {
+    "value" : "20",
+    "optionName" : "G1ReservePercent"
+  }, {
+    "value" : "50",
+    "optionName" : "MaxGCPauseMillis"
+  }, {
+    "value" : "32M",
+    "optionName" : "G1HeapRegionSize"
+  } ]
+}

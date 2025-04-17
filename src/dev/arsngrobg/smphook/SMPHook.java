@@ -1,9 +1,15 @@
 package dev.arsngrobg.smphook;
 
+import java.io.File;
 import java.util.Scanner;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonRootName;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
+import com.fasterxml.jackson.databind.json.JsonMapper;
+
 import dev.arsngrobg.smphook.core.concurrency.TaskExecutor;
-import dev.arsngrobg.smphook.core.discord.DiscordWebhook;
 import dev.arsngrobg.smphook.core.server.HeapArg;
 import dev.arsngrobg.smphook.core.server.JVMOption;
 import dev.arsngrobg.smphook.core.server.ServerProcess;
@@ -79,18 +85,7 @@ public final class SMPHook {
     }
 
     public static void runTUI() throws SMPHookError {
-        HeapArg min = HeapArg.ofSize(2,  Unit.GIGABYTE);
-        HeapArg max = HeapArg.ofSize(10, Unit.GIGABYTE);
-        JVMOption[] options = {
-            JVMOption.enabled("UnlockExperimentalVMOptions"),
-            JVMOption.enabled("UseG1GC"),
-            JVMOption.assigned("G1NewSizePercent", 20),
-            JVMOption.assigned("G1ReservePercent", 20),
-            JVMOption.assigned("MaxGCPauseMillis", 50),
-            JVMOption.assigned("G1HeapRegionSize", "32M")
-        };
-
-        ServerProcess proc = ServerProcess.spawn("smp\\server.jar", min, max, options);
+        ServerProcess proc = ServerProcess.spawn("smp\\server.jar", null, null);
         System.out.println(proc.getInitCommand());
 
         TaskExecutor io = TaskExecutor.waiting(() -> {
@@ -118,9 +113,41 @@ public final class SMPHook {
         }
     }
 
-    public static void main(String[] args) throws SMPHookError {
+    public static void main(String[] args) throws Exception {
         //runTUI();
-        var webhook = DiscordWebhook.fromURL("https://discord.com/api/webhooks/1359366493564960838/bd6LNz2eQbMpZGr0NX1anbI3LLcA7aN2NFJ6j3v-iRrEtcfh747t7dHOPLnXJrBBmxK_");
-        System.out.println(webhook.getLastResponse());
+
+        @JsonRootName("heapAllocs")
+        record HeapAllocs(
+            @JsonProperty("min") String min,
+            @JsonProperty("max") String max
+        ) {}
+
+        @JsonRootName("server")
+        record ServerConfiguration(
+            @JsonProperty("jarPath")    String jar,
+            @JsonProperty("heapAllocs") HeapAllocs heapAllocs,
+            @JsonProperty("jvmOptions") JVMOption... options
+        ) {}
+
+        String jarPath = "smp\\server.jar";
+        HeapArg min = HeapArg.ofSize(2,  Unit.GIGABYTE);
+        HeapArg max = HeapArg.ofSize(10, Unit.GIGABYTE);
+        JVMOption[] options = {
+            JVMOption.enabled("UnlockExperimentalVMOptions"),
+            JVMOption.enabled("UseG1GC"),
+            JVMOption.assigned("G1NewSizePercent", 20),
+            JVMOption.assigned("G1ReservePercent", 20),
+            JVMOption.assigned("MaxGCPauseMillis", 50),
+            JVMOption.assigned("G1HeapRegionSize", "32M")
+        };
+
+        ServerConfiguration serverConfiguration = new ServerConfiguration(
+            jarPath,
+            new HeapAllocs(min.toString(), max.toString()),
+            options
+        );
+
+        ObjectMapper mapper = new ObjectMapper();
+        mapper.writerWithDefaultPrettyPrinter().writeValue(new File("test.json"), serverConfiguration);
     }
 }
