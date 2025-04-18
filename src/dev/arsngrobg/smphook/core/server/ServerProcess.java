@@ -56,8 +56,9 @@ public final class ServerProcess {
             condition(() -> !serverJarFile.exists(), SMPHookError.with(ErrorType.FILE, "serverJar does not exist.")),
             condition(() -> !serverJarFile.isFile(), SMPHookError.with(ErrorType.FILE, "serverJar is not a file.")),
             condition(() -> {
-                String ext = serverJar.substring(serverJar.length() - 4, serverJar.length());
-                return !ext.equals(".jar");
+                int fileExtStart = serverJar.lastIndexOf('.');
+                String fileExt = serverJar.substring(fileExtStart);
+                return !fileExt.equals(".jar");
             }, SMPHookError.with(ErrorType.FILE, "serverJar file is not a .jar file."))
         );
 

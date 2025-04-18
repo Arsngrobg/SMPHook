@@ -1,26 +1,35 @@
 package dev.arsngrobg.smphook;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.annotation.JsonRootName;
+import java.io.File;
 
-import dev.arsngrobg.smphook.core.server.JVMOption;
+import dev.arsngrobg.smphook.SMPHookError.ErrorType;
+import static dev.arsngrobg.smphook.SMPHookError.condition;
 
 public final class SMPHookConfig {
-    @JsonRootName("server")
-    public record ServerConfiguration(
-        @JsonProperty("jar")        String jar,
-        @JsonProperty("minHeap")    String minHeap,
-        @JsonProperty("maxHeap")    String maxHeap,
-        @JsonProperty("jvmOptions") JVMOption... options
-    ) {}
+    private static SMPHookConfig config = null;
 
-    private final @JsonProperty("server") ServerConfiguration serverConfiguration;
+    public static SMPHookConfig load(String configPath) throws SMPHookError {
+        File asFileRef = SMPHookError.throwIfFail(() -> new File(configPath));
+        SMPHookError.caseThrow(
+            condition(() -> !asFileRef.exists(), SMPHookError.with(ErrorType.FILE, "The config file provided does not exist.")),
+            condition(() -> !asFileRef.isFile(), SMPHookError.with(ErrorType.FILE, "The config file provided is not a file.")),
+            condition(() -> {
+                int fileExtStart = configPath.lastIndexOf('.');
+                String fileExt = configPath.substring(fileExtStart);
+                return !fileExt.equals(".json");
+            }, SMPHookError.with(ErrorType.FILE, "The config file provided is not a .json file."))
+        );
 
-    public SMPHookConfig(@JsonProperty("server") ServerConfiguration serverConfiguration) {
-        this.serverConfiguration = serverConfiguration;
+        // TODO: actual parse code here
+
+        return config;
     }
 
-    public ServerConfiguration getServerConfiguration() {
-        return serverConfiguration;
+    public static SMPHookConfig get() throws SMPHookError {
+        if (config == null) {
+            throw SMPHookError.with(ErrorType.FILE, "Config file has not been loaded.");
+        }
+
+        return config;
     }
 }

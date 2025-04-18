@@ -22,6 +22,9 @@ import dev.arsngrobg.smphook.core.server.HeapArg.Unit;
  * @since  1.0
  */
 public final class SMPHook {
+    /** <p>The local path for the config file - local to the JAR.</p> */
+    public static final String CONFIG_FILE_PATH = "hook.json";
+
     /** <p>The current major version of SMPHook. It is incremented when a <i>major</i> feature is introduced.</p> */
     public static final int VERSION_MAJOR = 1;
 
@@ -113,41 +116,9 @@ public final class SMPHook {
         }
     }
 
-    public static void main(String[] args) throws Exception {
+    public static void main(String[] args) throws SMPHookError {
         //runTUI();
 
-        @JsonRootName("heapAllocs")
-        record HeapAllocs(
-            @JsonProperty("min") String min,
-            @JsonProperty("max") String max
-        ) {}
-
-        @JsonRootName("server")
-        record ServerConfiguration(
-            @JsonProperty("jarPath")    String jar,
-            @JsonProperty("heapAllocs") HeapAllocs heapAllocs,
-            @JsonProperty("jvmOptions") JVMOption... options
-        ) {}
-
-        String jarPath = "smp\\server.jar";
-        HeapArg min = HeapArg.ofSize(2,  Unit.GIGABYTE);
-        HeapArg max = HeapArg.ofSize(10, Unit.GIGABYTE);
-        JVMOption[] options = {
-            JVMOption.enabled("UnlockExperimentalVMOptions"),
-            JVMOption.enabled("UseG1GC"),
-            JVMOption.assigned("G1NewSizePercent", 20),
-            JVMOption.assigned("G1ReservePercent", 20),
-            JVMOption.assigned("MaxGCPauseMillis", 50),
-            JVMOption.assigned("G1HeapRegionSize", "32M")
-        };
-
-        ServerConfiguration serverConfiguration = new ServerConfiguration(
-            jarPath,
-            new HeapAllocs(min.toString(), max.toString()),
-            options
-        );
-
-        ObjectMapper mapper = new ObjectMapper();
-        mapper.writerWithDefaultPrettyPrinter().writeValue(new File("test.json"), serverConfiguration);
+        var config = SMPHookConfig.load(SMPHook.CONFIG_FILE_PATH);
     }
 }

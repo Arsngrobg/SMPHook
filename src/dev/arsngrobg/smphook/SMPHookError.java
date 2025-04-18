@@ -334,7 +334,7 @@ public final class SMPHookError extends Error {
         SMPHookError.strictlyRequireNonNull(t, "t");
 
         StackTraceElement[] stacktrace = t.getStackTrace();
-        if (stacktrace.length == 0 || stacktrace[0] == null) {
+        if (stacktrace.length == 0) {
             return SMPHookError.with(ErrorType.PROPAGATED, String.format("Thrown by %s.", t.getClass().getSimpleName()));
         }
 
