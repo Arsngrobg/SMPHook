@@ -21,7 +21,20 @@ import dev.arsngrobg.smphook.core.server.HeapArg;
 import dev.arsngrobg.smphook.core.server.JVMOption;
 import static dev.arsngrobg.smphook.SMPHookError.condition;
 
+/**
+ * <p>The {@code SMPHookConfig} class represents an object representation of the local {@code "hook.json"} file.
+ *    It is implemented as a singleton and is instantiated using the {@link SMPHookConfig#load(String)} method.
+ *    To retrieve the most recent configuration - use the {@link SMPHookConfig#get()} method.
+ * </p>
+ * 
+ * <p>This class is immutable and thread-safe for reading purposes.</p>
+ * 
+ * @author Arsngrobg
+ * @since  1.0
+ * @see    SMPHook
+ */
 public final class SMPHookConfig {
+    // deserializer for JVMOption
     private static final class JVMOptionDeserializer extends StdDeserializer<JVMOption> {
         public JVMOptionDeserializer() {
             super(JVMOption.class);
@@ -53,6 +66,13 @@ public final class SMPHookConfig {
     @JsonIgnore
     private static SMPHookConfig config = null;
 
+    /**
+     * <p>Loads the configuration file defined by the supplied {@code configPath} path.</p>
+     * 
+     * @param configPath the local path to the configuration file
+     * @return the newest configuration instance
+     * @throws SMPHookError if the configuration could not be correctly parsed or the configuration file is invalid
+     */
     public static SMPHookConfig load(String configPath) throws SMPHookError {
         File asFileRef = SMPHookError.throwIfFail(() -> new File(configPath));
         SMPHookError.caseThrow(
@@ -65,7 +85,6 @@ public final class SMPHookConfig {
             }, SMPHookError.with(ErrorType.FILE, "The config file provided is not a .json file."))
         );
 
-        // TODO: actual parse code here
         SimpleModule module = new SimpleModule();
         module.addDeserializer(JVMOption.class, new JVMOptionDeserializer());
 
@@ -76,6 +95,14 @@ public final class SMPHookConfig {
         return config;
     }
 
+    /**
+     * <p>Retrieves the most recently-loaded configuration.</p>
+     * 
+     * <p>If no configuration was loaded - an {@link SMPHookError} is thrown by this method.</p>
+     * 
+     * @return the most-recently loaded configuration instance
+     * @throws SMPHookError if no configuration was loaded
+     */
     public static SMPHookConfig get() throws SMPHookError {
         if (config == null) {
             throw SMPHookError.with(ErrorType.FILE, "Config file has not been loaded.");
@@ -84,12 +111,13 @@ public final class SMPHookConfig {
         return config;
     }
 
+    /** <p>The Data Transfer Object (DTO) for the server configuration JSON.</p> */
     @JsonRootName("server")
     public record ServerConfiguration(
-        @JsonProperty("jarPath")    String jarPath,
-        @JsonProperty("minHeap")    HeapArg minHeap,
-        @JsonProperty("maxHeap")    HeapArg maxHeap,
-        @JsonProperty("jvmOptions") JVMOption... options
+        @JsonProperty("jar-path")    String jarPath,
+        @JsonProperty("min-heap")    HeapArg minHeap,
+        @JsonProperty("max-heap")    HeapArg maxHeap,
+        @JsonProperty("JVM-options") JVMOption... options
     ) {}
 
     @JsonProperty("server")
@@ -100,7 +128,8 @@ public final class SMPHookConfig {
         this.serverConfiguration = serverConfiguration;
     }
 
-    @JsonGetter
+    /** @return the JSON wrapper for the server configuration */
+    @JsonGetter("server")
     public ServerConfiguration getServerConfiguration() {
         return serverConfiguration;
     }

@@ -1,13 +1,9 @@
 package dev.arsngrobg.smphook;
 
-import java.io.File;
 import java.util.Scanner;
 
 import dev.arsngrobg.smphook.core.concurrency.TaskExecutor;
-import dev.arsngrobg.smphook.core.server.HeapArg;
-import dev.arsngrobg.smphook.core.server.JVMOption;
 import dev.arsngrobg.smphook.core.server.ServerProcess;
-import dev.arsngrobg.smphook.core.server.HeapArg.Unit;
 
 /**
  * <p>The entry point for the program.</p>

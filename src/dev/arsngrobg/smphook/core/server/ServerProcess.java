@@ -34,7 +34,13 @@ import static dev.arsngrobg.smphook.SMPHookError.condition;
  * @see    MinecraftServer
  */
 public final class ServerProcess {
-    // TODO: DOCS
+    /**
+     * <p>Constructs a {@code ServerProcess} from the {@link SMPHookConfig.ServerConfiguration} supplied to this function.</p>
+     * 
+     * @param serverConfiguration - the server configuration
+     * @return a new {@code ServerProcess} instance
+     * @throws SMPHookError if {@code jarPath} is: {@code null}, doesn't exist, or not a file; the {@code minHeap} & {@code maxHeap} are mismatched
+     */
     public static ServerProcess fromConfig(SMPHookConfig.ServerConfiguration serverConfiguration) throws SMPHookError {
         return ServerProcess.spawn(
             serverConfiguration.jarPath(),
@@ -58,8 +64,8 @@ public final class ServerProcess {
      * @param minHeap - the minimum allocation argument for the server
      * @param maxHeap - the maximum allocation argument for the server
      * @param options - a variable number of {@link JVMOption}s
-     * @throws SMPHookError if {@code serverJar} is: {@code null}, doesn't exist, or not a file; the {@code minHeap} & {@code maxHeap} are mismatched
      * @return a new {@code ServerProcess} instance
+     * @throws SMPHookError if {@code serverJar} is: {@code null}, doesn't exist, or not a file; the {@code minHeap} & {@code maxHeap} are mismatched
      */
     public static ServerProcess spawn(String serverJar, HeapArg minHeap, HeapArg maxHeap, JVMOption... options) throws SMPHookError {
         File serverJarFile = SMPHookError.throwIfFail(() -> new File(serverJar));
