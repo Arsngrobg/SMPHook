@@ -1,16 +1,12 @@
 # Config/User-specific files
 hook.json
 
-# Log files
-.log
-/logs
+# Test server
+/smp
 
 # Project folders
 /.idea
 /.vscode
-
-# Test server
-/smp
 
 # Compiled class file
 *.class
