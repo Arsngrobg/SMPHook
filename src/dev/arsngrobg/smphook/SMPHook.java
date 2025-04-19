@@ -3,12 +3,6 @@ package dev.arsngrobg.smphook;
 import java.io.File;
 import java.util.Scanner;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.annotation.JsonRootName;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.SerializationFeature;
-import com.fasterxml.jackson.databind.json.JsonMapper;
-
 import dev.arsngrobg.smphook.core.concurrency.TaskExecutor;
 import dev.arsngrobg.smphook.core.server.HeapArg;
 import dev.arsngrobg.smphook.core.server.JVMOption;
@@ -88,7 +82,9 @@ public final class SMPHook {
     }
 
     public static void runTUI() throws SMPHookError {
-        ServerProcess proc = ServerProcess.spawn("smp\\server.jar", null, null);
+        SMPHookConfig config = SMPHookConfig.load(SMPHook.CONFIG_FILE_PATH);
+
+        ServerProcess proc = ServerProcess.fromConfig(config.getServerConfiguration());
         System.out.println(proc.getInitCommand());
 
         TaskExecutor io = TaskExecutor.waiting(() -> {
@@ -117,8 +113,6 @@ public final class SMPHook {
     }
 
     public static void main(String[] args) throws SMPHookError {
-        //runTUI();
-
-        var config = SMPHookConfig.load(SMPHook.CONFIG_FILE_PATH);
+        runTUI();
     }
 }

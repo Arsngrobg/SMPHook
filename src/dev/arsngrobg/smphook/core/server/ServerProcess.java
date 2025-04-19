@@ -10,6 +10,7 @@ import java.util.Optional;
 import java.util.function.BiFunction;
 
 import dev.arsngrobg.smphook.SMPHook;
+import dev.arsngrobg.smphook.SMPHookConfig;
 import dev.arsngrobg.smphook.SMPHookError;
 import dev.arsngrobg.smphook.SMPHookError.ErrorType;
 import static dev.arsngrobg.smphook.SMPHookError.condition;
@@ -33,6 +34,16 @@ import static dev.arsngrobg.smphook.SMPHookError.condition;
  * @see    MinecraftServer
  */
 public final class ServerProcess {
+    // TODO: DOCS
+    public static ServerProcess fromConfig(SMPHookConfig.ServerConfiguration serverConfiguration) throws SMPHookError {
+        return ServerProcess.spawn(
+            serverConfiguration.jarPath(),
+            serverConfiguration.minHeap(),
+            serverConfiguration.maxHeap(),
+            serverConfiguration.options()
+        );
+    }
+
     /**
      * <p>Constructs a {@code ServerProcess}.</p>
      * 
