@@ -1,5 +1,6 @@
 # Config/User-specific files
 hook.json
+*.json
 
 # Test server
 /smp

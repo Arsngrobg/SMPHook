@@ -109,6 +109,8 @@ public final class SMPHook {
     }
 
     public static void main(String[] args) throws SMPHookError {
-        runTUI();
+        //runTUI();
+        SMPHookConfig config = SMPHookConfig.load("hook-test.json");
+        config.export("test.json");
     }
 }

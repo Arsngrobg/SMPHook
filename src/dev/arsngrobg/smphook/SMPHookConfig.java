@@ -9,16 +9,21 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonRootName;
 import com.fasterxml.jackson.core.JacksonException;
+import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.databind.DeserializationContext;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializerProvider;
 import com.fasterxml.jackson.databind.deser.std.StdDeserializer;
 import com.fasterxml.jackson.databind.module.SimpleModule;
+import com.fasterxml.jackson.databind.ser.std.StdSerializer;
 
 import dev.arsngrobg.smphook.SMPHookError.ErrorType;
 import dev.arsngrobg.smphook.core.server.HeapArg;
 import dev.arsngrobg.smphook.core.server.JVMOption;
+import dev.arsngrobg.smphook.core.server.HeapArg.Unit;
+
 import static dev.arsngrobg.smphook.SMPHookError.condition;
 
 /**
@@ -63,8 +68,40 @@ public final class SMPHookConfig {
         }
     }
 
+    // serializer for HeapArg
+    private static final class HeapArgSerializer extends StdSerializer<HeapArg> {
+        public HeapArgSerializer() {
+            super(HeapArg.class);
+        }
+
+        @Override
+        public void serialize(HeapArg value, JsonGenerator gen, SerializerProvider provider) throws IOException {
+            gen.writeString(value.toString());
+        }
+        
+    }
+
+    /** <p>The default {@code jar-path} value.</p> */
+    public static final String      DEFAULT_JAR_PATH    = "smp\\server.jar";
+
+    /** <p>The default {@code min-heap} value.</p> */
+    public static final HeapArg     DEFAULT_MIN_HEAP    = HeapArg.ofSize(2, Unit.GIGABYTE);
+
+    /** <p>The default {@code max-heap} value.</p> */
+    public static final HeapArg     DEFAULT_MAX_HEAP    = null;
+
+    /** <p>The default {@code JVM-options} value.</p> */
+    public static final JVMOption[] DEFAULT_JVM_OPTIONS = {};
+
     @JsonIgnore
     private static SMPHookConfig config = null;
+
+    /** @return The default configuration for SMPHook. */
+    public static SMPHookConfig defaults() {
+        return new SMPHookConfig(
+            new ServerConfiguration(DEFAULT_JAR_PATH, DEFAULT_MIN_HEAP, DEFAULT_MAX_HEAP, DEFAULT_JVM_OPTIONS)
+        );
+    }
 
     /**
      * <p>Loads the configuration file defined by the supplied {@code configPath} path.</p>
@@ -128,9 +165,42 @@ public final class SMPHookConfig {
         this.serverConfiguration = serverConfiguration;
     }
 
+    // TODO: javadoc
+    public void export(String configPath) throws SMPHookError {
+        File asFileRef = SMPHookError.throwIfFail(() -> new File(configPath));
+        if (!configPath.substring(configPath.lastIndexOf('.')).equals(".json")) {
+            throw SMPHookError.with(ErrorType.FILE, "Export path provided is not a .json file.");
+        }
+
+        SimpleModule module = new SimpleModule();
+        module.addSerializer(new HeapArgSerializer());
+
+        ObjectMapper mapper = new ObjectMapper();
+        mapper.registerModule(module);
+        SMPHookError.throwIfFail(() -> mapper.writerWithDefaultPrettyPrinter().writeValue(asFileRef, this));
+    }
+
     /** @return the JSON wrapper for the server configuration */
     @JsonGetter("server")
     public ServerConfiguration getServerConfiguration() {
         return serverConfiguration;
+    }
+
+    @Override
+    public int hashCode() {
+        return SMPHook.hashOf(config);
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (obj == null) return false;
+        if (obj == this) return true;
+        if (!(obj instanceof SMPHookConfig asConfig)) return false;
+        return serverConfiguration.equals(asConfig.serverConfiguration);
+    }
+
+    @Override
+    public String toString() {
+        return String.format("SMPHookConfig{%s}", serverConfiguration);
     }
 }
