@@ -1,206 +1,53 @@
 package dev.arsngrobg.smphook;
 
+import static dev.arsngrobg.smphook.SMPHookError.condition;
+
 import java.io.File;
-import java.io.IOException;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
-import com.fasterxml.jackson.annotation.JsonGetter;
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonRootName;
-import com.fasterxml.jackson.core.JacksonException;
-import com.fasterxml.jackson.core.JsonGenerator;
-import com.fasterxml.jackson.core.JsonParser;
-import com.fasterxml.jackson.databind.DeserializationContext;
-import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.SerializerProvider;
-import com.fasterxml.jackson.databind.deser.std.StdDeserializer;
-import com.fasterxml.jackson.databind.module.SimpleModule;
-import com.fasterxml.jackson.databind.ser.std.StdSerializer;
 
 import dev.arsngrobg.smphook.SMPHookError.ErrorType;
 import dev.arsngrobg.smphook.core.server.HeapArg;
 import dev.arsngrobg.smphook.core.server.JVMOption;
-import dev.arsngrobg.smphook.core.server.HeapArg.Unit;
 
-import static dev.arsngrobg.smphook.SMPHookError.condition;
-
-/**
- * <p>The {@code SMPHookConfig} class represents an object representation of the local {@code "hook.json"} file.
- *    It is implemented as a singleton and is instantiated using the {@link SMPHookConfig#load(String)} method.
- *    To retrieve the most recent configuration - use the {@link SMPHookConfig#get()} method.
- * </p>
- * 
- * <p>This class is immutable and thread-safe for reading purposes.</p>
- * 
- * @author Arsngrobg
- * @since  1.0
- * @see    SMPHook
- */
 public final class SMPHookConfig {
-    // deserializer for JVMOption
-    private static final class JVMOptionDeserializer extends StdDeserializer<JVMOption> {
-        public JVMOptionDeserializer() {
-            super(JVMOption.class);
-        }
-
-        @Override
-        public JVMOption deserialize(JsonParser parser, DeserializationContext ctxt) throws IOException, JacksonException {
-            JsonNode root = parser.getCodec().readTree(parser);
-
-            String name = root.get("name").asText();
-            if (root.has("enabled") && root.has("value")) {
-                throw new IOException("JVMOption must have either an 'enabled' or 'value' field - not both.");
-            }
-
-            if (root.has("enabled")) {
-                boolean enabled = root.get("enabled").asBoolean();
-                return enabled ? JVMOption.enabled(name) : JVMOption.disabled(name);
-            }
-
-            if (root.has("value")) {
-                String value = root.get("value").asText();
-                return JVMOption.assigned(name, value);
-            }
-
-            throw new IOException("Illegal JVMOption JSON.");
-        }
-    }
-
-    // serializer for HeapArg
-    private static final class HeapArgSerializer extends StdSerializer<HeapArg> {
-        public HeapArgSerializer() {
-            super(HeapArg.class);
-        }
-
-        @Override
-        public void serialize(HeapArg value, JsonGenerator gen, SerializerProvider provider) throws IOException {
-            gen.writeString(value.toString());
-        }
-        
-    }
-
-    /** <p>The default {@code jar-path} value.</p> */
-    public static final String      DEFAULT_JAR_PATH    = "smp\\server.jar";
-
-    /** <p>The default {@code min-heap} value.</p> */
-    public static final HeapArg     DEFAULT_MIN_HEAP    = HeapArg.ofSize(2, Unit.GIGABYTE);
-
-    /** <p>The default {@code max-heap} value.</p> */
-    public static final HeapArg     DEFAULT_MAX_HEAP    = null;
-
-    /** <p>The default {@code JVM-options} value.</p> */
-    public static final JVMOption[] DEFAULT_JVM_OPTIONS = {};
-
-    @JsonIgnore
-    private static SMPHookConfig config = null;
-
-    /** @return The default configuration for SMPHook. */
-    public static SMPHookConfig defaults() {
-        return new SMPHookConfig(
-            new ServerConfiguration(DEFAULT_JAR_PATH, DEFAULT_MIN_HEAP, DEFAULT_MAX_HEAP, DEFAULT_JVM_OPTIONS)
-        );
-    }
-
-    /**
-     * <p>Loads the configuration file defined by the supplied {@code configPath} path.</p>
-     * 
-     * @param configPath the local path to the configuration file
-     * @return the newest configuration instance
-     * @throws SMPHookError if the configuration could not be correctly parsed or the configuration file is invalid
-     */
-    public static SMPHookConfig load(String configPath) throws SMPHookError {
-        File asFileRef = SMPHookError.throwIfFail(() -> new File(configPath));
+    public static SMPHookConfig load(String confPath) throws SMPHookError {
+        File confFile = SMPHookError.throwIfFail(() -> new File(confPath));
         SMPHookError.caseThrow(
-            condition(() -> !asFileRef.exists(), SMPHookError.with(ErrorType.FILE, "The config file provided does not exist.")),
-            condition(() -> !asFileRef.isFile(), SMPHookError.with(ErrorType.FILE, "The config file provided is not a file.")),
+            condition(() -> !confFile.exists(), SMPHookError.with(ErrorType.FILE, "The config file provided does not exist.")),
+            condition(() -> !confFile.isFile(), SMPHookError.with(ErrorType.FILE, "The config file provided is not a file.")),
             condition(() -> {
-                int fileExtStart = configPath.lastIndexOf('.');
-                String fileExt = configPath.substring(fileExtStart);
+                int fileExtStart = confPath.lastIndexOf('.');
+                String fileExt = confPath.substring(fileExtStart);
                 return !fileExt.equals(".json");
             }, SMPHookError.with(ErrorType.FILE, "The config file provided is not a .json file."))
         );
 
-        SimpleModule module = new SimpleModule();
-        module.addDeserializer(JVMOption.class, new JVMOptionDeserializer());
-
         ObjectMapper mapper = new ObjectMapper();
-        mapper.registerModule(module);
-        config = SMPHookError.throwIfFail(() -> mapper.readValue(asFileRef, SMPHookConfig.class));
-
+        SMPHookConfig config = SMPHookError.throwIfFail(() -> mapper.readValue(confFile, SMPHookConfig.class));
         return config;
     }
 
-    /**
-     * <p>Retrieves the most recently-loaded configuration.</p>
-     * 
-     * <p>If no configuration was loaded - an {@link SMPHookError} is thrown by this method.</p>
-     * 
-     * @return the most-recently loaded configuration instance
-     * @throws SMPHookError if no configuration was loaded
-     */
-    public static SMPHookConfig get() throws SMPHookError {
-        if (config == null) {
-            throw SMPHookError.with(ErrorType.FILE, "Config file has not been loaded.");
-        }
-
-        return config;
-    }
-
-    /** <p>The Data Transfer Object (DTO) for the server configuration JSON.</p> */
+    /** <p>Data Transfer Object (DTO) for the server configuration.</p> */
     @JsonRootName("server")
     public record ServerConfiguration(
         @JsonProperty("jar-path")    String jarPath,
         @JsonProperty("min-heap")    HeapArg minHeap,
         @JsonProperty("max-heap")    HeapArg maxHeap,
-        @JsonProperty("JVM-options") JVMOption... options
+        @JsonProperty("JVM-options") JVMOption[] options
     ) {}
 
-    @JsonProperty("server")
-    private final ServerConfiguration serverConfiguration;
+    private final ServerConfiguration serverConfig;
 
     @JsonCreator
-    private SMPHookConfig(@JsonProperty("server") ServerConfiguration serverConfiguration) {
-        this.serverConfiguration = serverConfiguration;
+    private SMPHookConfig(@JsonProperty("server") ServerConfiguration serverConfig) {
+        this.serverConfig = serverConfig;
     }
 
-    // TODO: javadoc
-    public void export(String configPath) throws SMPHookError {
-        File asFileRef = SMPHookError.throwIfFail(() -> new File(configPath));
-        if (!configPath.substring(configPath.lastIndexOf('.')).equals(".json")) {
-            throw SMPHookError.with(ErrorType.FILE, "Export path provided is not a .json file.");
-        }
-
-        SimpleModule module = new SimpleModule();
-        module.addSerializer(new HeapArgSerializer());
-
-        ObjectMapper mapper = new ObjectMapper();
-        mapper.registerModule(module);
-        SMPHookError.throwIfFail(() -> mapper.writerWithDefaultPrettyPrinter().writeValue(asFileRef, this));
-    }
-
-    /** @return the JSON wrapper for the server configuration */
-    @JsonGetter("server")
-    public ServerConfiguration getServerConfiguration() {
-        return serverConfiguration;
-    }
-
-    @Override
-    public int hashCode() {
-        return SMPHook.hashOf(config);
-    }
-
-    @Override
-    public boolean equals(Object obj) {
-        if (obj == null) return false;
-        if (obj == this) return true;
-        if (!(obj instanceof SMPHookConfig asConfig)) return false;
-        return serverConfiguration.equals(asConfig.serverConfiguration);
-    }
-
-    @Override
-    public String toString() {
-        return String.format("SMPHookConfig{%s}", serverConfiguration);
+    public ServerConfiguration getServerConfig() {
+        return serverConfig;
     }
 }

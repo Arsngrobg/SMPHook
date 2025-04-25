@@ -10,7 +10,6 @@ import java.util.Optional;
 import java.util.function.BiFunction;
 
 import dev.arsngrobg.smphook.SMPHook;
-import dev.arsngrobg.smphook.SMPHookConfig;
 import dev.arsngrobg.smphook.SMPHookError;
 import dev.arsngrobg.smphook.SMPHookError.ErrorType;
 import static dev.arsngrobg.smphook.SMPHookError.condition;
@@ -34,22 +33,6 @@ import static dev.arsngrobg.smphook.SMPHookError.condition;
  * @see    MinecraftServer
  */
 public final class ServerProcess {
-    /**
-     * <p>Constructs a {@code ServerProcess} from the {@link SMPHookConfig.ServerConfiguration} supplied to this function.</p>
-     * 
-     * @param serverConfiguration - the server configuration
-     * @return a new {@code ServerProcess} instance
-     * @throws SMPHookError if {@code jarPath} is: {@code null}, doesn't exist, or not a file; the {@code minHeap} & {@code maxHeap} are mismatched
-     */
-    public static ServerProcess fromConfig(SMPHookConfig.ServerConfiguration serverConfiguration) throws SMPHookError {
-        return ServerProcess.spawn(
-            serverConfiguration.jarPath(),
-            serverConfiguration.minHeap(),
-            serverConfiguration.maxHeap(),
-            serverConfiguration.options()
-        );
-    }
-
     /**
      * <p>Constructs a {@code ServerProcess}.</p>
      * 

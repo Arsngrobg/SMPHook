@@ -5,6 +5,9 @@ import dev.arsngrobg.smphook.SMPHookError;
 import static dev.arsngrobg.smphook.SMPHookError.condition;
 import static dev.arsngrobg.smphook.SMPHookError.nullCondition;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonValue;
+
 /**
  * <p>The {@code HeapArg} class represents a Java Virtual Machine (JVM) heap allocation argument.
  *    It consists of an unsigned, non-zero {@code size} and a {@code unit} (defined by {@link HeapArg.Unit} enum).
@@ -42,6 +45,7 @@ public final class HeapArg implements Comparable<HeapArg> {
      * @see #ofSizeAndUnit(long, Unit)
      * @see #ofBytes(long)
      */
+    @JsonCreator
     public static HeapArg fromString(String argStr) throws SMPHookError {
         SMPHookError.caseThrow(
             nullCondition(argStr, "argStr"),
@@ -187,6 +191,7 @@ public final class HeapArg implements Comparable<HeapArg> {
     }
 
     @Override
+    @JsonValue
     public String toString() {
         return String.format("%d%c", getSize(), getUnit().name().charAt(0));
     }

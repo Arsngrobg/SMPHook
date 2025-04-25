@@ -3,6 +3,8 @@ package dev.arsngrobg.smphook;
 import java.util.Scanner;
 
 import dev.arsngrobg.smphook.core.concurrency.TaskExecutor;
+import dev.arsngrobg.smphook.core.server.HeapArg;
+import dev.arsngrobg.smphook.core.server.JVMOption;
 import dev.arsngrobg.smphook.core.server.ServerProcess;
 
 /**
@@ -78,9 +80,19 @@ public final class SMPHook {
     }
 
     public static void runTUI() throws SMPHookError {
-        SMPHookConfig config = SMPHookConfig.load(SMPHook.CONFIG_FILE_PATH);
+        String jarPath = "smp\\server.jar";
+        HeapArg minHeap = HeapArg.ofSize(2, HeapArg.Unit.GIGABYTE);
+        HeapArg maxHeap = HeapArg.ofSize(8, HeapArg.Unit.GIGABYTE);
+        JVMOption[] options = {
+            JVMOption.enabled("UnlockExperimentalVMOptions"),
+            JVMOption.enabled("UseG1GC"),
+            JVMOption.assigned("G1NewSizePercent", 20),
+            JVMOption.assigned("G1ReservePercent", 20),
+            JVMOption.assigned("MaxGCPauseMillis", 50),
+            JVMOption.assigned("G1HeapRegionSize", "32M")
+        };
 
-        ServerProcess proc = ServerProcess.fromConfig(config.getServerConfiguration());
+        ServerProcess proc = ServerProcess.spawn(jarPath, minHeap, maxHeap, options);
         System.out.println(proc.getInitCommand());
 
         TaskExecutor io = TaskExecutor.waiting(() -> {
@@ -95,13 +107,6 @@ public final class SMPHook {
         proc.init(true);
         io.begin();
 
-        TaskExecutor.execute(() -> {
-            while (true) {
-                SMPHookError.consumeException(() -> Thread.sleep(3000));
-                proc.rawInput("say Hello, World!");
-            }
-        });
-
         String line;
         while (!(line = proc.rawOutput()).equals(ServerProcess.EOF)) {
             System.out.println(line);
@@ -110,7 +115,7 @@ public final class SMPHook {
 
     public static void main(String[] args) throws SMPHookError {
         //runTUI();
-        SMPHookConfig config = SMPHookConfig.load("hook-test.json");
-        config.export("test.json");
+        SMPHookConfig conf = SMPHookConfig.load("hook-test.json");
+        System.out.println(conf.getServerConfig());
     }
 }

@@ -1,5 +1,12 @@
 package dev.arsngrobg.smphook.core.server;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonGetter;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
+import com.fasterxml.jackson.annotation.JsonSubTypes;
+import com.fasterxml.jackson.annotation.JsonTypeInfo;
+
 import dev.arsngrobg.smphook.SMPHook;
 import dev.arsngrobg.smphook.SMPHookError;
 import static dev.arsngrobg.smphook.SMPHookError.nullCondition;
@@ -18,6 +25,14 @@ import static dev.arsngrobg.smphook.SMPHookError.nullCondition;
  * @see    #assigned(String, Object)
  * @see    ServerProcess
  */
+@JsonTypeInfo(
+    use = JsonTypeInfo.Id.DEDUCTION,
+    include = JsonTypeInfo.As.PROPERTY
+)
+@JsonSubTypes({
+    @JsonSubTypes.Type(value = JVMOption.Enabled.class),
+    @JsonSubTypes.Type(value = JVMOption.Assigned.class)
+})
 public sealed interface JVMOption permits JVMOption.Enabled, JVMOption.Assigned {
     /**
      * <p>Constructs an <b>enabled</b> {@code JVMOption} with the supplied {@code optionName}.</p>
@@ -51,7 +66,7 @@ public sealed interface JVMOption permits JVMOption.Enabled, JVMOption.Assigned 
      * @return a <b>assigned</b> {@code JVMOption} instance with the supplied {@code value}
      * @throws SMPHookError if {@code optionName} or {@code value} is {@code null}
      */
-    public static JVMOption.Assigned assigned(String optionName, Object value) throws SMPHookError {
+    public static JVMOption.Assigned assigned(String optionName,Object value) throws SMPHookError {
         SMPHookError.caseThrow(
             nullCondition(optionName, "optionName"),
             nullCondition(value, "value")
@@ -61,6 +76,7 @@ public sealed interface JVMOption permits JVMOption.Enabled, JVMOption.Assigned 
     }
 
     /** @return the name of the experimental JVM option */
+    @JsonGetter("name")
     String getOptionName();
 
     /**
@@ -72,11 +88,13 @@ public sealed interface JVMOption permits JVMOption.Enabled, JVMOption.Assigned 
      * @since  1.0
      * @see    JVMOption
      */
+    @JsonPropertyOrder({"name", "enabled"})
     public static final class Enabled implements JVMOption {
         private final String name;
         private final boolean enabled;
 
-        private Enabled(String name, boolean enabled) {
+        @JsonCreator
+        private Enabled(@JsonProperty("name") String name, @JsonProperty("enabled") boolean enabled) {
             this.name = name;
             this.enabled = enabled;
         }
@@ -119,11 +137,13 @@ public sealed interface JVMOption permits JVMOption.Enabled, JVMOption.Assigned 
      * @since  1.0
      * @see    JVMOption
      */
+    @JsonPropertyOrder({"name", "value"})
     public static final class Assigned implements JVMOption {
         private final String name;
         private final String value;
 
-        private Assigned(String name, String value) {
+        @JsonCreator
+        private Assigned(@JsonProperty("name") String name, @JsonProperty("value") String value) {
             this.name  = name;
             this.value = value;
         }
