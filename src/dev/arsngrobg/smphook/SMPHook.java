@@ -117,5 +117,6 @@ public final class SMPHook {
         //runTUI();
         SMPHookConfig conf = SMPHookConfig.load("hook-test.json");
         System.out.println(conf.getServerConfig());
+        conf.export("test23.json");
     }
 }

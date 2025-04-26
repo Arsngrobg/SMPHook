@@ -25,10 +25,7 @@ import static dev.arsngrobg.smphook.SMPHookError.nullCondition;
  * @see    #assigned(String, Object)
  * @see    ServerProcess
  */
-@JsonTypeInfo(
-    use = JsonTypeInfo.Id.DEDUCTION,
-    include = JsonTypeInfo.As.PROPERTY
-)
+@JsonTypeInfo(use = JsonTypeInfo.Id.DEDUCTION, include = JsonTypeInfo.As.PROPERTY)
 @JsonSubTypes({
     @JsonSubTypes.Type(value = JVMOption.Enabled.class),
     @JsonSubTypes.Type(value = JVMOption.Assigned.class)
