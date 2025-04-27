@@ -352,8 +352,6 @@ public final class SMPHookError extends Error {
             sb.append("\"").append(t.getMessage()).append("\"");
         }
 
-        sb.setLength(sb.length() - 4);
-
         return SMPHookError.with(ErrorType.PROPAGATED, sb.toString());
     }
 

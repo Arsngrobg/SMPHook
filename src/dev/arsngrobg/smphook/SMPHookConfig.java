@@ -2,6 +2,7 @@ package dev.arsngrobg.smphook;
 
 import java.io.File;
 import java.io.IOException;
+import java.time.Period;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonGetter;
@@ -9,7 +10,11 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonRootName;
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.core.PrettyPrinter;
+import com.fasterxml.jackson.core.util.DefaultIndenter;
+import com.fasterxml.jackson.core.util.DefaultPrettyPrinter;
+import com.fasterxml.jackson.core.util.DefaultPrettyPrinter.Indenter;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.ObjectWriter;
 
 import dev.arsngrobg.smphook.SMPHookError.ErrorType;
 import dev.arsngrobg.smphook.core.server.HeapArg;
@@ -52,56 +57,15 @@ public final class SMPHookConfig {
         @JsonProperty("JVM-options") JVMOption[] options
     ) {}
 
-    private static final PrettyPrinter PRETTY_PRINTER = new PrettyPrinter() {
-        @Override
-        public void writeRootValueSeparator(JsonGenerator gen) throws IOException {
-            
+    private static final PrettyPrinter PRETTY_PRINTER = new DefaultPrettyPrinter() {{
+            _objectFieldValueSeparatorWithSpaces = ": ";
+            indentArraysWith(DefaultIndenter.SYSTEM_LINEFEED_INSTANCE.withIndent("    "));
+            indentObjectsWith(DefaultIndenter.SYSTEM_LINEFEED_INSTANCE.withIndent("    "));
         }
 
-        @Override
-        public void writeStartObject(JsonGenerator gen) throws IOException {
-
-        }
-
-        @Override
-        public void writeEndObject(JsonGenerator gen, int nrOfEntries) throws IOException {
-
-        }
-
-        @Override
-        public void writeObjectEntrySeparator(JsonGenerator gen) throws IOException {
-
-        }
-
-        @Override
-        public void writeObjectFieldValueSeparator(JsonGenerator gen) throws IOException {
-
-        }
-
-        @Override
-        public void writeStartArray(JsonGenerator gen) throws IOException {
-
-        }
-
-        @Override
-        public void writeEndArray(JsonGenerator gen, int nrOfValues) throws IOException {
-
-        }
-
-        @Override
-        public void writeArrayValueSeparator(JsonGenerator gen) throws IOException {
-
-        }
-
-        @Override
-        public void beforeArrayValues(JsonGenerator gen) throws IOException {
-            
-        }
-
-        @Override
-        public void beforeObjectEntries(JsonGenerator gen) throws IOException {
-
-        }
+        public DefaultPrettyPrinter createInstance() {
+            return new DefaultPrettyPrinter(this);
+        };
     };
 
     private final ServerConfiguration serverConfig;
@@ -123,7 +87,8 @@ public final class SMPHookConfig {
         );
 
         ObjectMapper mapper = new ObjectMapper();
-        SMPHookError.throwIfFail(() -> mapper.writeValue(exportFile, this));
+        ObjectWriter writer = mapper.writer(PRETTY_PRINTER);
+        SMPHookError.throwIfFail(() -> writer.writeValue(exportFile, this));
     }
 
     /** @return the server configuration Data Transfer Object (DTO) */
