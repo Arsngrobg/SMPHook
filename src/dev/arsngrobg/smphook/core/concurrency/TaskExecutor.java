@@ -31,7 +31,7 @@ public final class TaskExecutor {
     /**
      * <p>Gets a {@code TaskExecutor} object, supply the given task {@code t} to it, and execute it.</p>
      * 
-     * @param t - the task for the {@code TaskExecutor} to execute
+     * @param  t - the task for the {@code TaskExecutor} to execute
      * @return a {@code TaskExecutor} instance executing the given task
      * @throws SMPHookError if the supplied task {@code t} is {@code null}
      */
@@ -55,17 +55,21 @@ public final class TaskExecutor {
     }
 
     private static TaskExecutor getNextAvailableExecutor() {
+        // search for the next available slot
         for (int idx = 0; idx < executorPool.length; idx++) {
+            // if slot is waiting to be populated
             if (executorPool[idx] == null) {
                 executorPool[idx] = new TaskExecutor(idx);
                 return executorPool[idx];
             }
 
+            // if slot can be replaced with a new task
             if (executorPool[idx].hasExecuted()) {
                 return executorPool[idx];
             }
         }
 
+        // otherwise - make room for another
         TaskExecutor[] copy = new TaskExecutor[executorPool.length + 1];
         TaskExecutor executor = new TaskExecutor(copy.length - 1);
         copy[copy.length - 1] = executor;

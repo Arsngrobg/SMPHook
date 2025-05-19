@@ -16,7 +16,7 @@ import java.util.function.Supplier;
  * <p>See {@link SMPHookError.ErrorType} for the various supported error types for an {@code SMPHookError}.</p>
  * 
  * <p>In all of the {@code SMPHookError} factory method signatures it declares that it also throws an {@code SMPHookError}.
- *    This is either due to the method inherintly throws an {@code SMPHookError}, or for {@code null}-safety.
+ *    This is either due to the method inherintly throwing an {@code SMPHookError}, or for {@code null}-safety.
  * </p>
  * 
  * <p>It extends the {@link java.lang.Error} class, so it is said that any unusual or illegal state is considered un-recoverable.</p>
