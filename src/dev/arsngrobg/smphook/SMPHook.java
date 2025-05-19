@@ -14,9 +14,6 @@ import dev.arsngrobg.smphook.core.server.ServerProcess;
  * @since  1.0
  */
 public final class SMPHook {
-    /** <p>The local path for the config file - local to the JAR.</p> */
-    public static final String CONFIG_FILE_PATH = "hook.json";
-
     /** <p>The current major version of SMPHook. It is incremented when a <i>major</i> feature is introduced.</p> */
     public static final int VERSION_MAJOR = 1;
 
@@ -79,7 +76,7 @@ public final class SMPHook {
         return result;
     }
 
-    public static void runTUI() throws SMPHookError {
+    public static void tenv() throws SMPHookError {
         String jarPath = "smp\\server.jar";
         HeapArg minHeap = HeapArg.ofSize(2, HeapArg.Unit.GIGABYTE);
         HeapArg maxHeap = HeapArg.ofSize(8, HeapArg.Unit.GIGABYTE);
@@ -114,9 +111,7 @@ public final class SMPHook {
     }
 
     public static void main(String[] args) throws SMPHookError {
-        //runTUI();
-        SMPHookConfig conf = SMPHookConfig.load("hook-test.json");
-        SMPHookConfig.loadDefaults();
+        SMPHookConfig conf = SMPHookConfig.loadOrElseDefaults(SMPHookConfig.DEFAULT_CONFIG_PATH);
         System.out.println(conf);
     }
 }

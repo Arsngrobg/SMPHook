@@ -15,7 +15,6 @@ import com.fasterxml.jackson.annotation.JsonRootName;
 import com.fasterxml.jackson.core.util.DefaultIndenter;
 import com.fasterxml.jackson.core.util.DefaultPrettyPrinter;
 import com.fasterxml.jackson.core.util.Separators;
-import com.fasterxml.jackson.core.util.DefaultPrettyPrinter.Indenter;
 import com.fasterxml.jackson.core.util.Separators.Spacing;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectWriter;
@@ -27,10 +26,15 @@ import com.fasterxml.jackson.databind.ObjectWriter;
  * 
  * <p>To load a configuration file, use the {@link #load(String)} method.</p>
  * <p>To get the previously loaded file, use the {@link #get()} method.</p>
- * <p>
+ * <p>To drop the current configuration, use the {@link #drop()} method.</p>
+ * 
+ * <p>This class is a thread-safe class and immutable to prevent non-atomic changes to the configuration.</p>
  * 
  * @author Arsngrobg
  * @since  1.0
+ * @see    #load(String)
+ * @see    #get()
+ * @see    #drop()
  */
 public final class SMPHookConfig {
     /** <p>The default config path.</p> */
@@ -81,6 +85,8 @@ public final class SMPHookConfig {
         Separators separators = Separators.createDefaultInstance()
                                           .withArrayValueSeparator(',')
                                           .withObjectEntrySeparator(',')
+                                          .withArrayEmptySeparator("")
+                                          .withObjectEmptySeparator("")
                                           .withArrayValueSpacing(Spacing.AFTER)
                                           .withObjectFieldValueSpacing(Spacing.AFTER)
                                           .withObjectEntrySpacing(Spacing.AFTER);
@@ -99,12 +105,40 @@ public final class SMPHookConfig {
     @JsonProperty("server")
     private final ServerSettings serverSettings;
 
+    /**
+     * <p>Returns and exports the default {@code SMPHookConfig} instance.</p>
+     * 
+     * <p><i>The defaults are exported to {@value #DEFAULT_CONFIG_PATH}</i></p>
+     * 
+     * @return the default {@code SMPHookConfig} instance
+     * @throws SMPHookError if the default instance could not be exported
+     */
     public static synchronized SMPHookConfig loadDefaults() throws SMPHookError {
         SMPHookConfig defaults = new SMPHookConfig(DEFAULT_SERVER_SETTINGS);
         
-        SMPHookError.throwIfFail(() -> writer.writeValue(new File(DEFAULT_CONFIG_PATH), defaults));
+        SMPHookError.throwIfFail(() -> writer.writeValue(new File(SMPHookConfig.DEFAULT_CONFIG_PATH), defaults));
 
         return defaults;
+    }
+
+    /**
+     * <p>Attempts to load the configuration file defined by the {@code configPath} argument.
+     *    If loading the config file from {@code configPath} fails then this method will return the default instance.
+     * </p>
+     * 
+     * <p><i>NOTE: This method will also fail if the default instance could not be exported.</i></p>
+     * 
+     * @param configPath - the relative path to the configuration file
+     * @return the loaded configuration file / the default configuration
+     * @throws SMPHookError if the supplied {@code configPath} is {@code null} or the defaults could not be exported
+     */
+    public static synchronized SMPHookConfig loadOrElseDefaults(String configPath) throws SMPHookError {
+        File confFile = SMPHookError.throwIfFail(() -> new File(configPath));
+        if (!confFile.exists()) {
+            return SMPHookConfig.loadDefaults();
+        }
+
+        return SMPHookError.throwIfFail(() -> mapper.readValue(confFile, SMPHookConfig.class));
     }
 
     /**
