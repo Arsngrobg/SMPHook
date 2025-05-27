@@ -1,11 +1,14 @@
 package dev.arsngrobg.smphook;
 
-import java.util.Scanner;
+import com.googlecode.lanterna.SGR;
+import com.googlecode.lanterna.TextColor;
+import com.googlecode.lanterna.graphics.TextGraphics;
+import com.googlecode.lanterna.input.KeyStroke;
+import com.googlecode.lanterna.input.KeyType;
+import com.googlecode.lanterna.terminal.DefaultTerminalFactory;
+import com.googlecode.lanterna.terminal.Terminal;
 
 import dev.arsngrobg.smphook.core.concurrency.TaskExecutor;
-import dev.arsngrobg.smphook.core.server.HeapArg;
-import dev.arsngrobg.smphook.core.server.JVMOption;
-import dev.arsngrobg.smphook.core.server.ServerProcess;
 
 /**
  * <p>The entry point for the program.</p>
@@ -14,11 +17,19 @@ import dev.arsngrobg.smphook.core.server.ServerProcess;
  * @since  1.0
  */
 public final class SMPHook {
+    /** <p>Enables certain features used for debugging purposes (i.e. using a terminal emulator).</p> */
+    public static final boolean DEBUG = true;
+
     /** <p>The current major version of SMPHook. It is incremented when a <i>major</i> feature is introduced.</p> */
     public static final int VERSION_MAJOR = 1;
 
     /** <p>The current minor version of SMPHook. It is incremented when <i>minor</i> fixes or features are introduced.</p> */
     public static final int VERSION_MINOR = 0;
+
+    /** <p>Command-line arguments for determining the runtime use-case.</p> */
+    public static final String
+        ARG_NOGUI = "-nogui",
+        ARG_SETUP = "-setup";
 
     /**
      * <p>Formats the current {@link #VERSION_MAJOR} and {@link #VERSION_MINOR} into the string {@code MAJOR.MINOR}.</p>
@@ -67,7 +78,7 @@ public final class SMPHook {
             int hash;
             if (obj.getClass().isArray()) {
                 Object[] arr = (Object[]) obj;
-                hash = (arr == objects) ? objects.hashCode() : SMPHook.hashOf(arr);
+                hash = (arr.equals(objects)) ? objects.hashCode() : SMPHook.hashOf(arr);
             } else hash = obj.hashCode();
 
             result += hash;
@@ -76,42 +87,86 @@ public final class SMPHook {
         return result;
     }
 
-    public static void tenv() throws SMPHookError {
-        String jarPath = "smp\\server.jar";
-        HeapArg minHeap = HeapArg.ofSize(2, HeapArg.Unit.GIGABYTE);
-        HeapArg maxHeap = HeapArg.ofSize(8, HeapArg.Unit.GIGABYTE);
-        JVMOption[] options = {
-            JVMOption.enabled("UnlockExperimentalVMOptions"),
-            JVMOption.enabled("UseG1GC"),
-            JVMOption.assigned("G1NewSizePercent", 20),
-            JVMOption.assigned("G1ReservePercent", 20),
-            JVMOption.assigned("MaxGCPauseMillis", 50),
-            JVMOption.assigned("G1HeapRegionSize", "32M")
-        };
+    public static void tui() throws Exception {
+        DefaultTerminalFactory factory = new DefaultTerminalFactory()
+        .setPreferTerminalEmulator(SMPHook.DEBUG)
+        .setForceTextTerminal(!SMPHook.DEBUG)
+        .setTerminalEmulatorTitle(String.format("SMPHook v%s", SMPHook.getVersion()));
 
-        ServerProcess proc = ServerProcess.spawn(jarPath, minHeap, maxHeap, options);
-        System.out.println(proc.getInitCommand());
+        Terminal terminal = factory.createTerminal();
+        TextGraphics tgfx = SMPHookError.throwIfFail(terminal::newTextGraphics);
 
-        TaskExecutor io = TaskExecutor.waiting(() -> {
-            Scanner input = new Scanner(System.in);
-            while (proc.isRunning()) {
-                String command = input.nextLine();
-                proc.rawInput(command);
-            }
-            input.close();
+        tgfx.setForegroundColor(TextColor.ANSI.WHITE_BRIGHT);
+        tgfx.getActiveModifiers().add(SGR.BOLD);
+
+        StringBuilder buffer = new StringBuilder();
+
+        terminal.addResizeListener((t, s) -> {
+            SMPHookError.throwIfFail(t::clearScreen);
+
+            tgfx.setBackgroundColor(TextColor.Indexed.fromRGB(15, 15, 15));
+            tgfx.fill('\s');
+
+            tgfx.setBackgroundColor(TextColor.Indexed.fromRGB(50, 168, 82));
+            tgfx.drawLine(0, s.getRows() - 2, s.getColumns(), s.getRows() - 2, '\s');
+            tgfx.putString(3, s.getRows() - 2, String.format("SMPHook v%s", SMPHook.getVersion()));
+            tgfx.setBackgroundColor(TextColor.Indexed.fromRGB(15, 15, 15));
+            tgfx.putString(0, s.getRows() - 1, ">>> ");
+
+            tgfx.setBackgroundColor(TextColor.Indexed.fromRGB(15, 15, 15));
+            tgfx.putString(4, SMPHookError.throwIfFail(terminal::getTerminalSize).getRows() - 1, buffer.toString());
+
+            SMPHookError.throwIfFail(t::flush);
         });
 
-        proc.init(true);
-        io.begin();
+        TaskExecutor.execute(() -> {
+            int cursorPosition = 0;
 
-        String line;
-        while (!(line = proc.rawOutput()).equals(ServerProcess.EOF)) {
-            System.out.println(line);
-        }
+            while (true) {
+                KeyStroke keyStroke = terminal.readInput();
+                KeyType   keyType   = keyStroke.getKeyType();
+
+                if (keyType == KeyType.Backspace && buffer.length() != 0) {
+                    tgfx.putString(4, terminal.getTerminalSize().getRows() - 1, buffer.toString().replaceAll(".", "\s"));
+                    buffer.deleteCharAt(cursorPosition != 0 ? --cursorPosition : 0);
+                } else if (keyType == KeyType.ArrowLeft && cursorPosition != 0) {
+                    cursorPosition--;
+                } else if (keyType == KeyType.ArrowRight && cursorPosition != buffer.length()) {
+                    cursorPosition++;
+                } else if (keyType == KeyType.Enter) {
+                    String command = buffer.toString();
+                    tgfx.putString(4, terminal.getTerminalSize().getRows() - 1, command.replaceAll(".", "\s"));
+                    buffer.delete(0, buffer.length());
+                    cursorPosition = 0;
+                } else if (keyType == KeyType.Character) {
+                    buffer.insert(cursorPosition, keyStroke.getCharacter());
+                    cursorPosition++;
+                }
+
+                tgfx.setBackgroundColor(TextColor.Indexed.fromRGB(15, 15, 15));
+                tgfx.putString(4, terminal.getTerminalSize().getRows() - 1, buffer.toString());
+                terminal.setCursorPosition(4 + cursorPosition, terminal.getTerminalSize().getRows() - 1);
+
+                terminal.flush();
+            }
+        });
     }
 
-    public static void main(String[] args) throws SMPHookError {
-        SMPHookConfig conf = SMPHookConfig.loadOrElseDefaults(SMPHookConfig.DEFAULT_CONFIG_PATH);
-        System.out.println(conf);
+    public static void setup() throws SMPHookError {
+        SMPHookConfig config = SMPHookConfig.loadDefaults();
+        System.out.printf("Created default hook.json file");
+        System.out.println(config);
+    }
+
+    public static void main(String[] args) throws Exception {
+        // default to use the GUI for high-level usage
+        if (args.length == 0) args = new String[] { ARG_NOGUI };
+
+        if (args.length == 1) {
+            switch (args[0]) {
+                case ARG_NOGUI -> tui();
+                case ARG_SETUP -> setup();
+            }
+        } else System.err.println("Illegal number of arguments supplied");
     }
 }

@@ -15,7 +15,7 @@ import dev.arsngrobg.smphook.SMPHookError.ErrorType;
 import static dev.arsngrobg.smphook.SMPHookError.condition;
 
 /**
- * <p>The {@code ServerProcess} class wraps a {@link java.lang.Process}, specifically running a Java Minecraft server process.</p>
+ * <p>The {@code ServerProcess} class wraps a {@link java.lang.Process}, specifically running a Minecraft: Java Edition server process.</p>
  * 
  * <p>This class handles the I/O operations between SMPHook and the server.</p>
  * 
@@ -32,7 +32,7 @@ import static dev.arsngrobg.smphook.SMPHookError.condition;
  * @see    JVMOption
  * @see    MinecraftServer
  */
-public final class ServerProcess {
+public sealed class ServerProcess permits MinecraftServer {
     /**
      * <p>Constructs a {@code ServerProcess}.</p>
      * 
@@ -175,7 +175,7 @@ public final class ServerProcess {
 
     /**
      * <p>Checks to see if the server process in running.
-     *    If it is, it will also check if the input and output streams are non-null.
+     *    If it is, it will also check if the input and output streams are non-{@code null}.
      *    If not an {@link SMPHookError} is thrown.
      * </p>
      * 
@@ -256,6 +256,21 @@ public final class ServerProcess {
 
     @Override
     public String toString() {
-        return String.format("ServerProcess[-M:%s, +M:%d, O:%s]", minHeap.toXms(), maxHeap.toXmx(), Arrays.toString(options));
+        StringBuilder sb = new StringBuilder("ServerProcess[");
+
+        if (minHeap != null) {
+            sb.append("-M:").append(minHeap.toXms()).append("\s");
+        }
+        if (maxHeap != null) {
+            sb.append("+M:").append(maxHeap.toXmx()).append("\s");
+        }
+
+        if (options.length != 0) {
+            sb.append("O:").append(Arrays.toString(options)).append("\s");
+        }
+
+        sb.append("R:").append(isRunning()).append("]");
+
+        return sb.toString();
     }
 }

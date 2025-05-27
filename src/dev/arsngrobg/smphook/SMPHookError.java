@@ -1,5 +1,6 @@
 package dev.arsngrobg.smphook;
 
+import java.util.function.Consumer;
 import java.util.function.Supplier;
 
 /**
@@ -173,7 +174,7 @@ public final class SMPHookError extends Error {
 
     /**
      * <p>Executes the test {@code t} and returns the value from its result.
-     *    If the test {@code t} fails (i.e. throws an exception) its callback function {@code ifFail} will execute.
+     *    If the test {@code t} fails (i.e. throws an exception or error) its callback function {@code ifFail} will execute.
      *    The {@code ifFail} callback is also a supplying function.
      * </p>
      * 
@@ -184,11 +185,11 @@ public final class SMPHookError extends Error {
      */
     public static <T> T ifFail(SupplyingTest<T> t, Supplier<T> ifFail) {
         try { return SMPHookError.strictlyRequireNonNull(t, "t").test(); }
-        catch (Exception ignored) { return SMPHookError.throwIfFail(ifFail::get); }
+        catch (Exception | Error ignored) { return SMPHookError.throwIfFail(ifFail::get); }
     }
 
     /**
-     * <p>Executes the test {@code t} and if it throws an {@link java.lang.Exception} then it will invoke the {@code ifFail} callback.
+     * <p>Executes the test {@code t} and if it throws an {@link Exception} or {@link Error} then it will invoke the {@code ifFail} callback.
      *    Make sure your {@code ifFail} callback does not fail as this can cause unintended behaviour.
      * </p>
      * 
@@ -197,7 +198,7 @@ public final class SMPHookError extends Error {
      */
     public static void ifFail(Test t, Runnable ifFail) {
         try { SMPHookError.strictlyRequireNonNull(t, "t").test(); }
-        catch (Exception e) { SMPHookError.throwIfFail(ifFail::run); }
+        catch (Exception | Error ignored) { SMPHookError.throwIfFail(ifFail::run); }
     }
 
     /**
