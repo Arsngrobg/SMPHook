@@ -9,6 +9,8 @@ import com.googlecode.lanterna.terminal.DefaultTerminalFactory;
 import com.googlecode.lanterna.terminal.Terminal;
 
 import dev.arsngrobg.smphook.core.concurrency.TaskExecutor;
+import dev.arsngrobg.smphook.core.server.MinecraftServer;
+import dev.arsngrobg.smphook.core.server.ServerMessage;
 
 /**
  * <p>The entry point for the program.</p>
@@ -87,13 +89,18 @@ public final class SMPHook {
         return result;
     }
 
-    public static void tui() throws Exception {
+    /**
+     * <p>Runs the TUI (Text-based User Interface) - if on Windows it will open a terminal emulator.</p>
+     * 
+     * @throws SMPHookError if {@link java.io.IOException} is thrown by Lanterna
+     */
+    public static void tui() throws SMPHookError {
         DefaultTerminalFactory factory = new DefaultTerminalFactory()
         .setPreferTerminalEmulator(SMPHook.DEBUG)
         .setForceTextTerminal(!SMPHook.DEBUG)
         .setTerminalEmulatorTitle(String.format("SMPHook v%s", SMPHook.getVersion()));
 
-        Terminal terminal = factory.createTerminal();
+        Terminal terminal = SMPHookError.throwIfFail(factory::createTerminal);
         TextGraphics tgfx = SMPHookError.throwIfFail(terminal::newTextGraphics);
 
         tgfx.setForegroundColor(TextColor.ANSI.WHITE_BRIGHT);
@@ -150,6 +157,10 @@ public final class SMPHook {
                 terminal.flush();
             }
         });
+
+        TaskExecutor.execute(() -> {
+            
+        });
     }
 
     public static void setup() throws SMPHookError {
@@ -159,14 +170,24 @@ public final class SMPHook {
     }
 
     public static void main(String[] args) throws Exception {
-        // default to use the GUI for high-level usage
-        if (args.length == 0) args = new String[] { ARG_NOGUI };
+        SMPHookConfig config = SMPHookConfig.load("hook.json");
+        MinecraftServer server = MinecraftServer.fromConfig(config.serverSettings());
 
-        if (args.length == 1) {
-            switch (args[0]) {
-                case ARG_NOGUI -> tui();
-                case ARG_SETUP -> setup();
-            }
-        } else System.err.println("Illegal number of arguments supplied");
+        server.start();
+
+        ServerMessage msg;
+        while ( !(msg = server.getMessage()).equals(ServerMessage.EOF) ) {
+            System.out.println(msg.toFullyQualifiedString());
+        }
+
+        // default to use the GUI for high-level usage
+        // if (args.length == 0) args = new String[] { ARG_NOGUI };
+
+        // if (args.length == 1) {
+        //     switch (args[0]) {
+        //         case ARG_NOGUI -> tui();
+        //         case ARG_SETUP -> setup();
+        //     }
+        // } else System.err.println("Illegal number of arguments supplied");
     }
 }

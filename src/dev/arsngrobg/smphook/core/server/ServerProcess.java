@@ -32,7 +32,7 @@ import static dev.arsngrobg.smphook.SMPHookError.condition;
  * @see    JVMOption
  * @see    MinecraftServer
  */
-public sealed class ServerProcess permits MinecraftServer {
+public final class ServerProcess {
     /**
      * <p>Constructs a {@code ServerProcess}.</p>
      * 
@@ -135,9 +135,7 @@ public sealed class ServerProcess permits MinecraftServer {
     }
 
     /**
-     * <p>Simulates the input you see in Minecraft: Java Edition, and processes the {@code command} as one complete command.
-     *    Any escape characters are replaced with their literal equivalent (e.g. any {@code '\n'} are replaced as {@code '\\n'}).
-     * </p>
+     * <p>Simulates the input you see in Minecraft: Java Edition, and processes the {@code command} as one complete command.</p>
      * 
      * @param command - the Minecraft command to be processed
      * @throws SMPHookError if the process is not running, or an {@link java.io.IOException} occurs
@@ -158,6 +156,8 @@ public sealed class ServerProcess permits MinecraftServer {
      * <p>Reads out the next line output by the server in a First In First Out (FIFO) order.</p>
      * 
      * <p>If the End Of Line (EOF) character ({@code "\0"}) is returned by this method, the server is no longer producing output.</p>
+     * 
+     * <p><b>NOTE: This method is blocking.</b></p>
      * 
      * @return the next line from the server
      * @throws SMPHookError if the process is not running, or an {@link java.io.IOException}
