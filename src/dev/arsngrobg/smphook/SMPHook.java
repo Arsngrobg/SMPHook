@@ -1,5 +1,7 @@
 package dev.arsngrobg.smphook;
 
+import static dev.arsngrobg.smphook.SMPHookError.condition;
+
 /**
  * <p>The entry point for the program.</p>
  * 
@@ -16,6 +18,24 @@ public final class SMPHook {
     public static final int VERSION_MINOR = 1;
     /** <p>The current <b>PATCH</b> version of SMPHook. It is incremented when backward compatible bug fixes are made.</p> */
     public static final int VERSION_PATCH = 0;
+
+    // dev assertions for version numbers - uses semantic versioning
+    static {
+        SMPHookError.caseThrow(
+            condition(() -> VERSION_MAJOR < 0, SMPHookError.withMessage("MAJOR version invalid")),
+            condition(() -> VERSION_MINOR < 0, SMPHookError.withMessage("MINOR version invalid")),
+            condition(() -> VERSION_PATCH < 0, SMPHookError.withMessage("PATCH version invalid"))
+        );
+    }
+
+    /**
+     * <p>Formats the {@link #VERSION_MAJOR}, {@link #VERSION_MINOR}, and {@link #VERSION_PATCH} into the format {@code MAJOR}.{@code MINOR}.{@code PATCH}.</p>
+     * 
+     * @return the string representation of {@link #VERSION_MAJOR}, {@link #VERSION_MINOR}, and {@link #VERSION_PATCH} put together
+     */
+    public static String getVersion() {
+        return String.format("%d.%d.%d", VERSION_MAJOR, VERSION_MINOR, VERSION_PATCH);
+    }
 
     /**
      * <p><i>This method is more preferable over Java's methods for its greater compatability.</i></p>
