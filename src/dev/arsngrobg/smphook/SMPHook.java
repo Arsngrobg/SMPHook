@@ -31,7 +31,7 @@ public final class SMPHook {
     /**
      * <p>Formats the {@link #VERSION_MAJOR}, {@link #VERSION_MINOR}, and {@link #VERSION_PATCH} into the format {@code MAJOR}.{@code MINOR}.{@code PATCH}.</p>
      * 
-     * @return the string representation of {@link #VERSION_MAJOR}, {@link #VERSION_MINOR}, and {@link #VERSION_PATCH} put together
+     * @return the string representation of {@link #VERSION_MAJOR}, {@link #VERSION_MINOR}, and {@link #VERSION_PATCH} into one string
      */
     public static String getVersion() {
         return String.format("%d.%d.%d", VERSION_MAJOR, VERSION_MINOR, VERSION_PATCH);
@@ -51,7 +51,7 @@ public final class SMPHook {
      * 
      * <p>An illustration of how this hashing algorithm works for {@code n} elements, where {@code n} is greater than 1:
      *    <blockquote><pre>
-     *       31 + h[n - 1] * 31 + h[n-2] * ... * 31 + h[0]
+     *       (31 + h[n - 1]) * (31 + h[n-2]) * (...) * (31 + h[0])
      *    </pre></blockquote>
      *    <i>where {@code h} is the individual hash for that element, and {@code n} is the number of elements in the list.</i>
      * </p>
