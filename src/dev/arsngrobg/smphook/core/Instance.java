@@ -1,7 +1,5 @@
 package dev.arsngrobg.smphook.core;
 
-import dev.arsngrobg.smphook.SMPHook;
-
 /**
  * <p>This interface must be implemented by all instanciable classes in the <b>SMPHook</b> system.</p>
  * 
