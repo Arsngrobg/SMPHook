@@ -4,7 +4,7 @@ package dev.arsngrobg.smphook;
  * <p>The entry point for the program.</p>
  * 
  * @author Arsngrobg
- * @since  1.0
+ * @since  0.1.0
  */
 public final class SMPHook {
     /** <p>Enables certain features used for debugging purposes.</p> */
@@ -27,6 +27,6 @@ public final class SMPHook {
     }
 
     public static void main(String[] args) {
-        
+
     }
 }
