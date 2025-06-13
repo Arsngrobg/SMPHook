@@ -5,6 +5,8 @@ package dev.arsngrobg.smphook.core;
  * 
  * <p><i>Wraps the {@link Object#equals(Object)} instance method.</i></p>
  * 
+ * <p><b>Not to be confused with the {@link java.lang.Comparable} interface.</b></p>
+ * 
  * @author Arsngrobg
  * @since  0.1.0
  */
