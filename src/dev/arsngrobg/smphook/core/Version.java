@@ -69,9 +69,42 @@ public final class Version implements Instance {
     }
 
     /**
+     * <p>Compares this version with the supplied {@code ver}.</p>
+     * 
+     * <p>The build state is ignored as it is only an identifier.</p>
+     * 
+     * @param ver - the version to compare with
+     * @return {@code true} if this version is newer than {@code ver}; {@code false} if otherwise
+     * 
+     * @since 0.0.1
+     * @see   #isNewerThan(int, int, int)
+     */
+    public boolean isNewerThan(Version ver) {
+        if (ver == null) return false;
+        return isNewerThan(ver.major, ver.minor, ver.patch);
+    }
+
+    /**
+     * <p>Compares this version with the supplied {@code major}, {@code minor}, and {@code patch}.</p>
+     * 
+     * @param major - the major version component
+     * @param minor - the minor version component
+     * @param patch - the patch version component
+     * @return {@code true} if this version is newer than {@code ver}; {@code false} if otherwise
+     * 
+     * @since 0.0.1
+     * @see   #isNewerThan(Version)
+     */
+    public boolean isNewerThan(int minor, int major, int patch) {
+        return (this.major < major) && (this.minor < minor) && (this.patch < patch);
+    }
+
+    /**
      * <p>Returns the major version component.</p>
      *
      * @return the major version number as an integer
+     * 
+     * @since 0.0.1
      */
     public int getMajorComponent() {
         return major;
@@ -81,6 +114,8 @@ public final class Version implements Instance {
      * <p>Returns the minor version component.</p>
      *
      * @return the minor version number as an integer
+     * 
+     * @since 0.0.1
      */
     public int getMinorComponent() {
         return minor;
@@ -90,6 +125,8 @@ public final class Version implements Instance {
      * </p>Returns the patch version component.</p>
      *
      * @return the patch version number as an integer
+     * 
+     * @since 0.0.1
      */
     public int getPatchComponent() {
         return patch;
@@ -99,6 +136,8 @@ public final class Version implements Instance {
      * <p>Checks if this version of SMPHook is in {@code ALPHA}.</p>
      *
      * @return {@code true} if the build state is {@code ALPHA}; {@code false} otherwise
+     * 
+     * @since 0.0.1
      */
     public boolean inAlpha() {
         return build == BuildState.ALPHA;
@@ -108,6 +147,8 @@ public final class Version implements Instance {
      * <p>Checks if this version of SMPHook is in {@code BETA}.</p>
      *
      * @return {@code true} if the build state is {@code BETA}; {@code false} otherwise
+     * 
+     * @since 0.0.1
      */
     public boolean inBeta() {
         return build == BuildState.BETA;
@@ -117,6 +158,8 @@ public final class Version implements Instance {
      * <p>Checks if this version of SMPHook is {@code STABLE}.</p>
      *
      * @return {@code true} if the build state is {@code STABLE}; {@code false} otherwise
+     * 
+     * @since 0.0.1
      */
     public boolean isStable() {
         return build == BuildState.STABLE;
