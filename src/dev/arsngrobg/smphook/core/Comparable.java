@@ -8,7 +8,7 @@ package dev.arsngrobg.smphook.core;
  * <p><b>Not to be confused with the {@link java.lang.Comparable} interface.</b></p>
  * 
  * @author Arsngrobg
- * @since  0.1.0
+ * @since  0.0.1
  */
 public interface Comparable {
     /**
@@ -29,7 +29,7 @@ public interface Comparable {
      * 
      * @return whether this object is equal to {@code o}
      * 
-     * @since 0.1.0
+     * @since 0.0.1
      */
     @Override
     boolean equals(Object o);

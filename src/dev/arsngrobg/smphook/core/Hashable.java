@@ -6,7 +6,7 @@ package dev.arsngrobg.smphook.core;
  * <p><i>Wraps the {@link Object#hashCode()} instance method.</i></p>
  * 
  * @author Arsngrobg
- * @since  0.1.0
+ * @since  0.0.1
  */
 public interface Hashable {
     /**

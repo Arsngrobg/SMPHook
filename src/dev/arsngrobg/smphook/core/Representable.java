@@ -6,7 +6,7 @@ package dev.arsngrobg.smphook.core;
  * <p><i>Wraps the {@link Object#toString()} instance method.</i></p>
  * 
  * @author Arsngrobg
- * @since  0.1.0
+ * @since  0.0.1
  */
 public interface Representable {
     /**
@@ -16,7 +16,7 @@ public interface Representable {
      * 
      * @return the {@code String} representation of this object
      * 
-     * @since 0.1.0
+     * @since 0.0.1
      */
     @Override
     String toString();

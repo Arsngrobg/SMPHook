@@ -9,7 +9,7 @@ package dev.arsngrobg.smphook.core;
  * <p>This groups up the {@link dev.arsngrobg.smphook.core.Hashable}, {@link dev.arsngrobg.smphook.core.Comparable}, and {@link dev.arsngrobg.smphook.core.Representable} interfaces.</p>
  * 
  * @author Arsngrobg
- * @since  0.1.0
+ * @since  0.0.1
  */
 public interface Instance extends Hashable, Comparable, Representable {
     @Override
