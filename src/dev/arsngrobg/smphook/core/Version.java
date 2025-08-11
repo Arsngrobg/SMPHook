@@ -26,7 +26,7 @@ public final class Version implements Instance {
      * 
      * <p><b>NOTICE: Ensure that this value is correct before pushing any future changes!</b></p>
      */
-    public static final BuildState VERSION_BUILD = BuildState.STABLE;
+    public static final BuildState VERSION_BUILD = BuildState.ALPHA;
     
     /**
      * <p>The set of states that the SMPHook client can be versioned as.
