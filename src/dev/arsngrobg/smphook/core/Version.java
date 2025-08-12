@@ -1,6 +1,7 @@
 package dev.arsngrobg.smphook.core;
 
 // TODO: Grab the latest available STABLE version of SMPHook using GitHub API
+//       https://api.github.com/repos/arsngrobg/SMPHook/releases/latest
 
 /**
  * <p>The {@code Version} class acts as metadata for a version of the SMPHook client.</p>
@@ -85,7 +86,7 @@ public final class Version implements Instance {
     }
 
     /**
-     * <p>Compares this version with the supplied {@code major}, {@code minor}, and {@code patch}.</p>
+     * <p>Compares this version with the supplied {@code major}, {@code minor}, and {@code patch} version components.</p>
      * 
      * @param major - the major version component
      * @param minor - the minor version component
@@ -95,8 +96,14 @@ public final class Version implements Instance {
      * @since 0.0.1
      * @see   #isNewerThan(Version)
      */
-    public boolean isNewerThan(int minor, int major, int patch) {
-        return (this.major < major) && (this.minor < minor) && (this.patch < patch);
+    public boolean isNewerThan(int major, int minor, int patch) {
+        if (this.major > major) return true;
+        if (this.major < major) return false;
+
+        if (this.minor > minor) return true;
+        if (this.minor < minor) return false;
+
+        return this.patch > patch;
     }
 
     /**
