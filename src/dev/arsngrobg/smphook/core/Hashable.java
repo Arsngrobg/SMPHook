@@ -10,12 +10,12 @@ package dev.arsngrobg.smphook.core;
  */
 public interface Hashable {
     /**
-     * <p><i>This method is more preferable over Java's methods for its greater compatability.</i></p>
+     * <p><i>This method is more preferable over Java's methods for its greater compatibility.</i></p>
      * 
      * <p>Hashes each element in the supplied argument list of {@code objects}, in which the order of the objects matter.</p>
      * 
-     * <p>Each element will rely on its inherint {@link #hashCode()} - via {@link System#identityHashCode(Object)}.
-     *    However, if the an element is an array it will apply another invokation to this method to get the hash of each independent element of the sub array - and so on.
+     * <p>Each element will rely on its inherent {@link #hashCode()} - via {@link System#identityHashCode(Object)}.
+     *    However, if the element is an array it will apply another invocation to this method to get the hash of each independent element of the sub array - and so on.
      *    If an element is the same as the whole argument list it will use the {@link #hashCode()} of the array reference itself.
      *    If the number of elements supplied is zero - this method returns 0.
      *    If the number of elements supplied is one - this method returns the {@link #hashCode()} for the first element in the argument list.
@@ -31,7 +31,7 @@ public interface Hashable {
      * @param objects - the objects to make a combined hash
      * @return a unique hash of those objects
      */
-    public static int hashOf(Object... objects) {
+     static int hashOf(Object... objects) {
         if (objects.length == 0) return 0;
         if (objects.length == 1) return objects[0].hashCode();
 
@@ -62,8 +62,8 @@ public interface Hashable {
      * <p>For the {@link Hashable#hashCode()} contract to be fulfilled, it must agree to these requirements:
      *    <ul>
      *       <li>It must return a consistent value - it should align with the current state of this instance</li>
-     *       <li>If two objects are equal (as described by {@link Comparable#equals(Object) method} - then the hashcodes should also be the same</li>
-     *       <li>Two non-equal objects that are not equal may produce distinct hashcodes in order to increase performance of certain collection types that utilize this hashcode.</li>
+     *       <li>If two objects are equal (as described by {@link Comparable#equals(Object) method} - then the hashcode should also be the same</li>
+     *       <li>Two non-equal objects that are not equal may produce distinct hashcode in order to increase performance of certain collection types that utilize this hashcode.</li>
      *    </ul>
      * </p> 
      * 

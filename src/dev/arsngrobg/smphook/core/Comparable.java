@@ -18,7 +18,7 @@ public interface Comparable {
      *    <ul>
      *       <li>It is reflexive - {@code o.equals(o) == true}</li>
      *       <li>It is symmetric - {@code x.equals(y) == y.equals(x)}</li>
-     *       <li>It is transistive - {@code x.equals(y) == y.equals(z)} then {@code x.equals(z)}</li>
+     *       <li>It is transitive - {@code x.equals(y) == y.equals(z)} then {@code x.equals(z)}</li>
      *       <li>It is consistent - {@code x.equals(y) == true} <b>always</b></li>
      *    </ul>
      * </p>
