@@ -4,7 +4,7 @@ import dev.arsngrobg.smphook.core.Version;
 
 /**
  * <p>The entry point for the program.</p>
- * 
+ *
  * @author Arsngrobg
  * @since  0.0.1
  */

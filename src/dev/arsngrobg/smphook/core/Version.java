@@ -1,11 +1,11 @@
 package dev.arsngrobg.smphook.core;
 
 // TODO: Grab the latest available STABLE version of SMPHook using GitHub API
-//       https://api.github.com/repos/arsngrobg/SMPHook/releases/latest
+//       (https://api.github.com/repos/arsngrobg/SMPHook/releases/latest)
 
 /**
  * <p>The {@code Version} class acts as metadata for a version of the SMPHook client.</p>
- * 
+ *
  * @author Arsngrobg
  * @since  0.0.1
  */
@@ -14,26 +14,26 @@ public final class Version implements Instance {
      * <p>Semantic versioning is used to define each update for the SMPHook client.
      *    These components should match the <b>current</b> version of this SMPHook client and should be positive.
      * </p>
-     * 
+     *
      * <p><b>NOTICE: Ensure that the values are correct before pushing any future changes!</b></p>
      */
     public static final int
         VERSION_MAJOR = 0,
         VERSION_MINOR = 0,
         VERSION_PATCH = 2;
-    
+
     /**
-     * <p>The current build state of this SMPHook client.</p>
-     * 
+     * <p>The current build state of this SMPHook client version.</p>
+     *
      * <p><b>NOTICE: Ensure that this value is correct before pushing any future changes!</b></p>
      */
     public static final BuildState VERSION_BUILD = BuildState.ALPHA;
-    
+
     /**
      * <p>The set of states that the SMPHook client can be versioned as.
-     *    It is metadata attached to the version number and is purely a marker of stability. 
+     *    It is metadata attached to the version number and is purely a marker of stability.
      * </p>
-     * 
+     *
      * @author Arsngrobg
      * @since  0.0.1
      */
@@ -48,9 +48,9 @@ public final class Version implements Instance {
 
     /**
      * <p>This is the current version of SMPHook currently running on the user's device.</p>
-     * 
+     *
      * @return the client version
-     * 
+     *
      * @since 0.0.1
      */
     public static Version getClient() {
@@ -71,12 +71,12 @@ public final class Version implements Instance {
 
     /**
      * <p>Compares this version with the supplied {@code ver}.</p>
-     * 
+     *
      * <p>The build state is ignored as it is only an identifier.</p>
-     * 
+     *
      * @param ver - the version to compare with
      * @return {@code true} if this version is newer than {@code ver}; {@code false} if otherwise
-     * 
+     *
      * @since 0.0.1
      * @see   #isNewerThan(int, int, int)
      */
@@ -87,12 +87,12 @@ public final class Version implements Instance {
 
     /**
      * <p>Compares this version with the supplied {@code major}, {@code minor}, and {@code patch} version components.</p>
-     * 
+     *
      * @param major - the major version component
      * @param minor - the minor version component
      * @param patch - the patch version component
      * @return {@code true} if this version is newer than {@code ver}; {@code false} if otherwise
-     * 
+     *
      * @since 0.0.1
      * @see   #isNewerThan(Version)
      */
@@ -110,7 +110,7 @@ public final class Version implements Instance {
      * <p>Returns the major version component.</p>
      *
      * @return the major version number as an integer
-     * 
+     *
      * @since 0.0.1
      */
     public int getMajorComponent() {
@@ -121,7 +121,7 @@ public final class Version implements Instance {
      * <p>Returns the minor version component.</p>
      *
      * @return the minor version number as an integer
-     * 
+     *
      * @since 0.0.1
      */
     public int getMinorComponent() {
@@ -132,7 +132,7 @@ public final class Version implements Instance {
      * </p>Returns the patch version component.</p>
      *
      * @return the patch version number as an integer
-     * 
+     *
      * @since 0.0.1
      */
     public int getPatchComponent() {
@@ -143,7 +143,7 @@ public final class Version implements Instance {
      * <p>Checks if this version of SMPHook is in {@code ALPHA}.</p>
      *
      * @return {@code true} if the build state is {@code ALPHA}; {@code false} otherwise
-     * 
+     *
      * @since 0.0.1
      */
     public boolean inAlpha() {
@@ -154,7 +154,7 @@ public final class Version implements Instance {
      * <p>Checks if this version of SMPHook is in {@code BETA}.</p>
      *
      * @return {@code true} if the build state is {@code BETA}; {@code false} otherwise
-     * 
+     *
      * @since 0.0.1
      */
     public boolean inBeta() {
@@ -165,7 +165,7 @@ public final class Version implements Instance {
      * <p>Checks if this version of SMPHook is {@code STABLE}.</p>
      *
      * @return {@code true} if the build state is {@code STABLE}; {@code false} otherwise
-     * 
+     *
      * @since 0.0.1
      */
     public boolean isStable() {
