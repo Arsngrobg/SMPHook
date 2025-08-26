@@ -1,7 +1,7 @@
 package dev.arsngrobg.smphook.core;
 
 /**
- * <p>Tagging interface to say that a class `implements` an instance - i.e. allows the instantiation of the class.
+ * <p>Tagging interface to say that a class `implements` an instance - i.e. allows the instantiation of the class (indirectly/directly).
  *    Correct use of this interface is that <b>all</b> the methods <b>must</b> be implemented - even if not directly enforced by the compiler or linter.
  *    It is an enforced programming standard with the <b>SMPHook</b> project, no implicit super definitions are allowed.
  * </p>

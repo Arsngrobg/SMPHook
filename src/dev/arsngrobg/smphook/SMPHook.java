@@ -12,7 +12,7 @@ public final class SMPHook {
     /** <p>Enables certain features used for debugging purposes.</p> */
     public static final boolean DEBUG = true;
 
-    public static void main(String[] args) {
+    public static void main(String... args) {
         System.out.printf("SMPHook v%s", Version.getClient());
     }
 }

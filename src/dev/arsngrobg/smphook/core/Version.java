@@ -19,8 +19,8 @@ public final class Version implements Instance {
      */
     public static final int
         VERSION_MAJOR = 0,
-        VERSION_MINOR = 0,
-        VERSION_PATCH = 2;
+        VERSION_MINOR = 1,
+        VERSION_PATCH = 0;
 
     /**
      * <p>The current build state of this SMPHook client version.</p>
