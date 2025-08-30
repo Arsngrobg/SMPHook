@@ -1,6 +1,7 @@
 package dev.arsngrobg.smphook.server.config;
 
 import java.util.Arrays;
+import java.util.stream.Stream;
 
 import dev.arsngrobg.smphook.core.Hashable;
 import dev.arsngrobg.smphook.core.Instance;
@@ -70,6 +71,46 @@ public final class JVMOption<T> implements Instance {
 
     /** <p>The character that prefixes the option {@code name}.</p> */
     public static final char SYSTEM_PROPERTY_CHAR = 'D';
+
+    public static JVMOption<?> parseArg(String arg) {
+        if (arg == null) throw new NullPointerException("arg");
+
+        Type           type      = null;
+        String         name      = null;
+        ValueSeperator seperator = ValueSeperator.NONE;
+        Object         value     = null;
+
+        for (Type t : Type.values()) {
+            String prefix = t.getPrefix();
+            if (arg.length() < prefix.length()) continue;
+
+            String argPrefix = arg.substring(0, prefix.length());
+            if (argPrefix.equals(prefix)) {
+                type = t;
+            }
+        }
+
+        if (type == null) {
+            throw new IllegalArgumentException("Expected prefix.");
+        }
+
+        String removedPrefix = arg.substring(type.getPrefix().length() - 1);
+        for (ValueSeperator s : ValueSeperator.values()) {
+            if (s == ValueSeperator.NONE) continue;
+            String[] pair = removedPrefix.split(String.valueOf(s.getChar()));
+            if (pair.length == 2) {
+                name      = pair[0];
+                value     = pair[1];
+                seperator = s;
+            }
+        }
+
+        if (seperator == ValueSeperator.NONE) {
+            name = removedPrefix;
+        }
+
+        return new JVMOption<Object>(type, name, seperator, value);
+    }
 
     private final Type           type;
     private final String         name;
@@ -194,5 +235,7 @@ public final class JVMOption<T> implements Instance {
         };
 
         Arrays.asList(options).forEach(System.out::println);
+
+        System.out.println(JVMOption.parseArg("-XX:+UseStringDeduplication"));
     }
 }
