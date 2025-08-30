@@ -160,11 +160,13 @@ public final class JVMOption<T> implements Instance {
     @Override
     public String toString() {
         StringBuilder stringBuilder = new StringBuilder(type.getPrefix());
-        if (value instanceof Boolean bool) { // ignore ValueSeperator if T is Boolean
+
+        if (type == Type.ADVANCED && value instanceof Boolean bool) {
             stringBuilder.append(bool ? '+' : '-');
         }
+
         stringBuilder.append(name).append(seperator.getChar());
-        if (value != null && !(value instanceof Boolean)) {
+        if (value != null && !(type == Type.ADVANCED && value instanceof Boolean)) {
             stringBuilder.append(value);
         }
 
