@@ -202,12 +202,13 @@ public final class JVMOption<T> implements Instance {
     public String toString() {
         StringBuilder stringBuilder = new StringBuilder(type.getPrefix());
 
-        if (type == Type.ADVANCED && value instanceof Boolean bool) {
-            stringBuilder.append(bool ? '+' : '-');
+        boolean isAdvancedBoolean = type == Type.ADVANCED && value instanceof Boolean;
+        if (isAdvancedBoolean) {
+            stringBuilder.append((Boolean) value ? '+' : '-');
         }
 
         stringBuilder.append(name).append(seperator.getChar());
-        if (value != null && !(type == Type.ADVANCED && value instanceof Boolean)) {
+        if (value != null && !isAdvancedBoolean) {
             stringBuilder.append(value);
         }
 
