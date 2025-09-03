@@ -1,12 +1,9 @@
 package dev.arsngrobg.smphook.server.config;
 
 import java.util.Arrays;
-import java.util.stream.Stream;
 
 import dev.arsngrobg.smphook.core.Hashable;
 import dev.arsngrobg.smphook.core.Instance;
-
-// TODO: ADD FACTORIES
 
 /**
  * <p>The {@code JVMOption} class represents a configurable component of the JVM using the CLI.</p>
@@ -71,6 +68,11 @@ public final class JVMOption<T> implements Instance {
 
     /** <p>The character that prefixes the option {@code name}.</p> */
     public static final char SYSTEM_PROPERTY_CHAR = 'D';
+
+    // TODO: Add elegant parsing method
+    public static JVMOption<?> parseArg(String arg) {
+        return null;
+    }
 
     private final Type           type;
     private final String         name;

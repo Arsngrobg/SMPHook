@@ -82,7 +82,7 @@ public final class Version implements Instance {
      */
     public boolean isNewerThan(Version ver) {
         if (ver == null) return false;
-        return isNewerThan(ver.major, ver.minor, ver.patch);
+        return isNewerThan(ver.getMajorComponent(), ver.getMinorComponent(), ver.getPatchComponent());
     }
 
     /**
@@ -187,10 +187,13 @@ public final class Version implements Instance {
 
     @Override
     public String toString() {
-        if (build != BuildState.STABLE) {
-            return String.format("%d.%d.%d-%s", major, minor, patch, build.toString().toLowerCase());
+        if (!isStable()) {
+            return String.format("%d.%d.%d-%s",
+                getMajorComponent(), getMinorComponent(), getPatchComponent(),
+                build.toString().toLowerCase()
+            );
         }
 
-        return String.format("%d.%d.%d", major, minor, patch);
+        return String.format("%d.%d.%d", getMajorComponent(), getMinorComponent(), getPatchComponent());
     }
 }
