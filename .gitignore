@@ -1,13 +1,11 @@
-# Config/User-specific files
-hook.json
-*.json
-
 # Test server
 /smp
 
 # Project folders
-/.idea
 /.vscode
+
+# Maven Target Directory
+/target
 
 # Compiled class file
 *.class
@@ -29,9 +27,6 @@ hook.json
 *.zip
 *.tar.gz
 *.rar
-
-# Don't ignore .jar files in the lib directory
-!lib/*.jar
 
 # virtual machine crash logs, see http://www.java.com/en/download/help/error_hotspot.xml
 hs_err_pid*
