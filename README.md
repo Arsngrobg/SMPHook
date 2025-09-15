@@ -8,7 +8,7 @@ A mod-loader-agnostic helper tool for self-hosted Minecraft: Java Edition server
     - [ ] v0.0.2 - Customization: JVM Option
     - [ ] v0.0.3 - Server Wrapper: Server Message
     - [ ] v0.0.4 - Server Wrapper: Client Message
-    - [ ] v0.0.3 - Server Wrapper: Server Process
+    - [ ] v0.0.5 - Server Wrapper: Server Process
 - [ ] v0.2.0 - Server Events
     - [ ] v0.1.1 - Event Interface
     - [ ] v0.1.2 - Default Events

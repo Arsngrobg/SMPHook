@@ -4,8 +4,11 @@
 # Project folders
 /.vscode
 
-# Maven Target Directory
+# Maven
 /target
+/.mvn
+mvnw
+mvnw.cmd
 
 # Compiled class file
 *.class
