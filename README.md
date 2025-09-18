@@ -2,7 +2,6 @@
 A mod-loader-agnostic helper tool for self-hosted Minecraft: Java Edition servers, designed to streamline setup, management, and customization.
 
 ## Roadmap
-- [ ] v0.0.0 - Core Utilities (Version Metadata, Exceptions, Scheduling, etc...)
 - [ ] v0.1.0 - Server Wrapper & Customization
     - [ ] v0.0.1 - Customization: Memory Size
     - [ ] v0.0.2 - Customization: JVM Option

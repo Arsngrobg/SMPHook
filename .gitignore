@@ -2,7 +2,7 @@
 /smp
 
 # Project folders
-/.vscode
+/.idea
 
 # Maven
 /target
