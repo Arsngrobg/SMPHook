@@ -1,6 +1,8 @@
 package dev.arsngrobg.smphook.server.config;
 
 import java.util.Objects;
+import java.util.Optional;
+import java.util.stream.Stream;
 
 /**
  * <p>The {@code MemorySize} class is a compressed shorthand for representing memory sizes.</p>
@@ -29,8 +31,68 @@ import java.util.Objects;
  * @since   v0.0.1-pre_alpha
  * @version v0.1
  * @see     MemorySize.Unit
+ * @see     MemorySize#ofSize(long, Unit)
+ * @see     MemorySize#ofBytes(long)
+ * @see     MemorySize#fromString(String) 
  */
 public final class MemorySize {
+    /**
+     * <p>This is the common factory for defining a {@code MemorySize} value.</p>
+     * <p>It parses the provided {@code memStr} into a tangible {@code MemorySize} object.
+     *    <pre><code>
+     *        var size = MemorySize.fromString("20"); // infers that you want to represent 20 bytes
+     *        System.out.println(size); // outputs: "20B"
+     *        System.out.println(size.equals(MemorySize.fromString("20B")); // outputs: true
+     *    </code></pre>
+     *    As you can see, this method will infer that a raw integer value means you require this {@code MemorySize} to
+     *    represent 20 bytes of memory/data.
+     * </p>
+     *
+     * @param  memStr the string representation to reverse engineer the {@code MemorySize}
+     * @return        a new {@code MemorySize} object, represented by the supplied {@code memStr}
+     * @author        Arsngrobg
+     * @since         v0.0.1-pre_alpha
+     * @see           MemorySize#ofSize(long, Unit)
+     * @see           MemorySize#ofBytes(long)
+     */
+    // TODO: handle illegal unit suffix
+    public static MemorySize fromString(final String memStr) {
+        if (Objects.isNull(memStr)) throw new NullPointerException("memStr");
+        if (memStr.isBlank()) throw new IllegalArgumentException("memStr cannot be blank");
+
+        final char lastChar = memStr.charAt(memStr.length() - 1);
+        final Optional<Unit> maybeUnit = Stream.of(Unit.values())
+                                               .filter(u -> u.name().charAt(0) == lastChar)
+                                               .findFirst();
+
+        final int subStrEnd = maybeUnit.isPresent() ? memStr.length() - 1 : memStr.length();
+        final long size = Integer.parseInt(memStr.substring(0, subStrEnd));
+
+        return maybeUnit.map(u -> MemorySize.ofSize(size, u))
+                        .orElse(MemorySize.ofBytes(size));
+    }
+
+    /**
+     * <p>This is a factory for creating a {@code MemorySize} from a number of {@code bytes}.</p>
+     * <p>This factory will implicitly convert the {@code bytes} into the closest and most-compressed representation of
+     *    the provided {@code bytes}.
+     *    <pre><code>
+     *        var bytes = MemorySize.ofBytes(1024);
+     *        System.out.println(bytes); // outputs: "1K"
+     *    </code></pre>
+     * </p>
+     *
+     * @param  bytes the number of whole bytes that this {@code MemorySize} will carry
+     * @return       a new {@code MemorySize} object, consisting of the number of provided {@code bytes} compressed into
+     *               the smallest representation possible
+     * @author       Arsngrobg
+     * @since        v0.0.1-pre_alpha
+     */
+    // TODO: compress whenever possible
+    public static MemorySize ofBytes(final long bytes) {
+        return MemorySize.ofSize(bytes, Unit.BYTE);
+    }
+
     /**
      * <p>This is the generic factory for creating a {@code MemorySize} object.</p>
      *
@@ -97,5 +159,18 @@ public final class MemorySize {
     @Override
     public int hashCode() {
         return Objects.hash(size, unit);
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (obj == null) return false;
+        if (obj == this) return true;
+        if (!(obj instanceof MemorySize asMemSize)) return false;
+        return size == asMemSize.getSize() && unit == asMemSize.getUnit();
+    }
+
+    @Override
+    public String toString() {
+        return String.format("%d%s", size, unit.name().charAt(0));
     }
 }
