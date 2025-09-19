@@ -7,19 +7,20 @@ import java.util.Optional;
  * <p>The {@code Version} class acts as the metadata for particular <b>SMPHook</b> client.</p>
  * <p><b>SMPHook</b> follows the SemVer versioning scheme: <a href="https://semver.org">semver.org</a></p>
  * <p>This class exposes <i>two</i> main factories for obtaining a {@code Version} of <b>SMPHook</b>.
- *    <pre>var client = Version.getClientVersion(); // the current version running on this system</pre>
- *    <pre>var latest = Version.getLatestVersion(); // the latest version found on GitHub</pre>
+ *    <pre><code>
+ *         var client = Version.getClientVersion(); // the current version running on this system
+ *         var latest = Version.getLatestVersion(); // the latest version found on GitHub
+ *    </code></pre>
  *    <i>The {@code Version::getLatestVersion} factory uses the GitHub API to retrieve the latest-available version of
  *       <b>SMPHook</b> on GitHub.
  *    </i>
  * </p>
  *
- * @see Version#getClientVersion
- * @see Version#getLatestVersion
- *
  * @author  Arsngrobg
  * @since   v0.0.0-pre_alpha
  * @version v1.1
+ * @see     Version#getClientVersion
+ * @see     Version#getLatestVersion
  */
 public final class Version {
     // NOTICE: these are the client version numbers, please make sure these reflect the true version
@@ -81,7 +82,7 @@ public final class Version {
     private final int major, minor, patch;
     private final ReleaseType release;
 
-    private Version(int major, int minor, int patch, ReleaseType release) {
+    private Version(final int major, final int minor, final int patch, final ReleaseType release) {
         this.major   = major;
         this.minor   = minor;
         this.patch   = patch;
@@ -98,7 +99,7 @@ public final class Version {
      * @since          v0.0.1-pre_alpha
      * @see            Version#isNewerThan(int, int, int, ReleaseType)
      */
-    public boolean isNewerThan(Version version) {
+    public boolean isNewerThan(final Version version) {
         return isNewerThan(version.getMajor(), version.getMinor(), version.getPatch(), version.getRelease());
     }
 
@@ -115,7 +116,7 @@ public final class Version {
      * @since          v0.0.1-pre_alpha
      * @see            Version#isNewerThan(Version)
      */
-    public boolean isNewerThan(int major, int minor, int patch, ReleaseType release) {
+    public boolean isNewerThan(final int major, final int minor, final int patch, final ReleaseType release) {
         if (this.major > major) return true;
         if (this.major < major) return false;
 
@@ -177,7 +178,7 @@ public final class Version {
     }
 
     @Override
-    public boolean equals(Object obj) {
+    public boolean equals(final Object obj) {
         if (obj == null) return false;
         if (obj == this) return true;
         if (!(obj instanceof Version asVer)) return false;
