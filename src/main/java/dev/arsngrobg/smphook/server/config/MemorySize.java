@@ -125,6 +125,7 @@ public final class MemorySize {
         PETABYTE,
         EXABYTE
     }
+
     private final long size;
     private final Unit unit;
 
