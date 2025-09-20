@@ -25,6 +25,7 @@ import java.util.stream.Stream;
  *        var cmp = size1.compareTo(size2);
  *        System.out.println(cmp); // outputs 1 - size1 is greater than size2
  *    </code></pre>
+ *    It performs relative comparisons using both {@code MemorySize}'s {@link Unit}s.
  * </p>
  *
  * @author  Arsngrobg
