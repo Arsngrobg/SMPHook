@@ -113,7 +113,9 @@ public final class MemorySize implements Comparable<MemorySize> {
     }
 
     /**
-     * <p>The memory units supported by most JVMs.</p>
+     * <p>The memory units supported by most JVMs, and some extras that could <i>theoretically</i> be supported by the
+     *    JVM.
+     * </p>
      * <p>It reaches a maximum of {@link Unit#EXABYTE} since that's the max scaler unit the 64-bit JVM can handle.</p>
      * <p>The ordinal value determines the difference in scale between each other unit scalar.</p>
      *
