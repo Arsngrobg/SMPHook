@@ -3,7 +3,7 @@ A mod-loader-agnostic helper tool for self-hosted Minecraft: Java Edition server
 
 ## Roadmap
 - [ ] v0.1.0 - Server Wrapper & Customization
-    - [ ] v0.0.1 - Customization: Memory Size
+    - [x] v0.0.1 - Customization: Memory Size
     - [ ] v0.0.2 - Customization: JVM Option
     - [ ] v0.0.3 - Server Wrapper: Server Message
     - [ ] v0.0.4 - Server Wrapper: Client Message
