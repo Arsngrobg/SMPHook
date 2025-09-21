@@ -14,14 +14,14 @@ import java.util.stream.Stream;
  * <p>This class provides <b>three</b> factories for wrapping raw values:
  *    <pre><code>
  *        var size = MemorySize.ofSize(20, Unit.MEGABYTE); // MemorySize[size: 20, unit: MEGABYTE]
- *        var size = MemorySize.ofBytes(20_971_520); // implicitly converts to MemorySize of "20M"
+ *        var size = MemorySize.ofBytes(20_971_520); // implicitly converts to MemorySize of 20M
  *        var size = MemorySize.fromString("4G"); // MemorySize[size: 4, unit: GIGABYTE]
  *    </code></pre>
  * </p>
  * <p>As mentioned previously, the {@code MemorySize} value class can be compared with other {@code MemorySize} objects.
  *    <pre><code>
  *        var size1 = MemorySize.fromString("1025B");
- *        var size2 = MemorySize.fromString("1K"); // equivalent to "1024B"
+ *        var size2 = MemorySize.fromString("1K"); // equivalent to 1024B
  *        var cmp = size1.compareTo(size2);
  *        System.out.println(cmp); // outputs 1 - size1 is greater than size2
  *    </code></pre>
@@ -45,7 +45,7 @@ public final class MemorySize implements Comparable<MemorySize> {
      * <p>It parses the provided {@code memStr} into a tangible {@code MemorySize} object.
      *    <pre><code>
      *        var size = MemorySize.fromString("20"); // infers that you want to represent 20 bytes
-     *        System.out.println(size); // output: "20B"
+     *        System.out.println(size); // output: 20B
      *        System.out.println(size.equals(MemorySize.fromString("20B")); // output: true
      *    </code></pre>
      *    As you can see, this method will infer that a raw integer value means you require this {@code MemorySize} to
@@ -84,7 +84,7 @@ public final class MemorySize implements Comparable<MemorySize> {
      * <p>
      *    <pre><code>
      *        var bytes = MemorySize.ofBytes(1024);
-     *        System.out.println(bytes); // output: "1024B"
+     *        System.out.println(bytes); // output: 1024B
      *    </code></pre>
      * </p>
      *
@@ -147,7 +147,7 @@ public final class MemorySize implements Comparable<MemorySize> {
      *    <pre><code>
      *        var size = MemorySize.fromString("1K");
      *        var bytes = size.toUnit(Unit.BYTE);
-     *        System.out.printf("%s == %s\n", size, bytes); // output: "1K == 1024B"
+     *        System.out.printf("%s == %s\n", size, bytes); // output: 1K == 1024B
      *    </code></pre>
      *    If the ordinal value of it is equal, then it will just return the same value
      * </p>

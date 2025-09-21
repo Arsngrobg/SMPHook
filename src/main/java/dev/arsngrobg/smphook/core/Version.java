@@ -5,7 +5,7 @@ import java.util.Optional;
 
 /**
  * <p>The {@code Version} class acts as the metadata for particular <b>SMPHook</b> client.</p>
- * <p><b>SMPHook</b> follows the SemVer versioning scheme: <a href="https://semver.org">semver.org</a></p>
+ * <p><b>SMPHook</b> follows the SemVer versioning scheme: <a href='https://semver.org'>semver.org</a></p>
  * <p>This class exposes <i>two</i> main factories for obtaining a {@code Version} of <b>SMPHook</b>.
  *    <pre><code>
  *         var client = Version.getClientVersion(); // the current version running on this system
@@ -26,7 +26,7 @@ public final class Version {
     // NOTICE: these are the client version numbers, please make sure these reflect the true version
     private static final int
         VERSION_MAJOR = 0,
-        VERSION_MINOR = 0,
+        VERSION_MINOR = 2,
         VERSION_PATCH = 0;
 
     // NOTICE: this is the client version release type, please make sure this reflects the true release type
@@ -60,6 +60,24 @@ public final class Version {
         throw new UnsupportedOperationException("Not supported yet.");
     }
 
+    /**
+     * <p>The {@code ReleaseType} enum defines the in-order sequence of build stages of a {@code Version} of
+     *    <b>SMPHook</b>.
+     * </p>
+     * <p>When obtaining the string representation of a {@code Version} object, the {@code ReleaseType} is appended to
+     *    the end of the version string. For example:
+     *    <pre><code>
+     *        var version = getClientVersion(); // the current version is 1, 2, 3, ReleaseType.BETA
+     *        System.out.println(version); // output: 1.2.3-beta
+     *    </code></pre>
+     *    However, if the current {@code Version} is a <b>STABLE</b> release, then the version number is returned
+     *    plainly.
+     * </p>
+     *
+     * @author  Arsngrobg
+     * @since   v0.0.1-pre_alpha
+     * @version v1.0
+     */
     @SuppressWarnings("unused")
     public enum ReleaseType {
         /** <p>Internal development - not intended for public use.</p> */
