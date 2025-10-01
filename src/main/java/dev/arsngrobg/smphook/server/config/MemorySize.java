@@ -36,6 +36,7 @@ import java.util.stream.Stream;
  * @see     MemorySize#ofBytes(long)
  * @see     MemorySize#fromString(String) 
  */
+@SuppressWarnings("ClassCanBeRecord")
 public final class MemorySize implements Comparable<MemorySize> {
     /** <p>This is the number of bytes per (binary) kilobyte.</p> */
     public static final int BYTES_PER_KILOBYTE = 1024;

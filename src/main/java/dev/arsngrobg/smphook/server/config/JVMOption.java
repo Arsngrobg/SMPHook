@@ -24,6 +24,7 @@ import java.util.Objects;
  * @since      v0.0.2-pre_alpha
  * @see        JVMOption#parse(String)
  */
+@SuppressWarnings("ClassCanBeRecord")
 public final class JVMOption<T> {
     /**
      * <p>The {@code Compliance} enum is the set of levels that a JVM option can have.</p>
