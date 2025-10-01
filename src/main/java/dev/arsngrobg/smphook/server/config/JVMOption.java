@@ -16,7 +16,7 @@ import java.util.Objects;
  *    </code></pre>
  *    All {@code JVMOption}s with a compliance level of {@link Compliance#NON_STANDARD} and is a {@code boolean} flag
  *    (see {@link JVMOption#isAdvancedBooleanFlag()}) then a {@code '+'} or {@code '-'} character is prepended to the
- *    option name instead of {@code valueSeparator + value}.
+ *    option name instead of {@code valueSeparator} {@code boolean}.
  * </p>
  *
  * @param  <T> the type of the {@code value} it holds
