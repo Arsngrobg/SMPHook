@@ -213,6 +213,6 @@ public final class Version {
     public String toString() {
         if (release == ReleaseType.STABLE) {
             return String.format("%d.%d.%d", major, minor, patch);
-        } else return String.format("%d.%d.%d-%s", major, minor, major, release);
+        } else return String.format("%d.%d.%d-%s", major, minor, patch, release);
     }
 }
