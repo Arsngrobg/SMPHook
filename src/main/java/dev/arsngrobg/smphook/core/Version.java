@@ -22,6 +22,7 @@ import java.util.Optional;
  * @see     Version#getClientVersion
  * @see     Version#getLatestVersion
  */
+@SuppressWarnings("ClassCanBeRecord")
 public final class Version {
     // NOTICE: these are the client version numbers, please make sure these reflect the true version
     private static final int
