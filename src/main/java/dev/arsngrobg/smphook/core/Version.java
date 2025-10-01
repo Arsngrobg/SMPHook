@@ -26,8 +26,8 @@ public final class Version {
     // NOTICE: these are the client version numbers, please make sure these reflect the true version
     private static final int
         VERSION_MAJOR = 0,
-        VERSION_MINOR = 2,
-        VERSION_PATCH = 0;
+        VERSION_MINOR = 0,
+        VERSION_PATCH = 2;
 
     // NOTICE: this is the client version release type, please make sure this reflects the true release type
     private static final ReleaseType VERSION_RELEASE = ReleaseType.PRE_ALPHA;
