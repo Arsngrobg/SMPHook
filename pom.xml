@@ -6,7 +6,7 @@
 
     <groupId>dev.arsngrobg</groupId>
     <artifactId>smphook</artifactId>
-    <version>0.0.0-pre-alpha</version>
+    <version>0.0.2-pre_alpha</version>
 
     <properties>
         <maven.compiler.source>21</maven.compiler.source>
