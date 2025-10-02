@@ -4,15 +4,15 @@ import java.util.Objects;
 import java.util.Optional;
 
 /**
- * <p>The {@code Version} class acts as the metadata for particular <b>SMPHook</b> client.</p>
+ * <p>The {@code Version} class acts as the metadata for a particular version of the <b>SMPHook</b> client.</p>
  * <p><b>SMPHook</b> follows the SemVer versioning scheme: <a href='https://semver.org'>semver.org</a></p>
  * <p>This class exposes <i>two</i> main factories for obtaining a {@code Version} of <b>SMPHook</b>.
  *    <pre><code>
  *         var client = Version.getClientVersion(); // the current version running on this system
  *         var latest = Version.getLatestVersion(); // the latest version found on GitHub
  *    </code></pre>
- *    <i>The {@code Version::getLatestVersion} factory uses the GitHub API to retrieve the latest-available version of
- *       <b>SMPHook</b> on GitHub.
+ *    <i>The {@code Version::getLatestVersion} factory uses the GitHub API to retrieve the latest-available
+ *       <b>STABLE</b> version of <b>SMPHook</b> on GitHub.
  *    </i>
  * </p>
  *
@@ -33,10 +33,14 @@ public final class Version {
     // NOTICE: this is the client version release type, please make sure this reflects the true release type
     private static final ReleaseType VERSION_RELEASE = ReleaseType.PRE_ALPHA;
 
+    // the client version
     private static final Version CLIENT_VERSION = new Version(
             VERSION_MAJOR, VERSION_MINOR, VERSION_PATCH,
             VERSION_RELEASE
     );
+
+    // the latest version available - lazily evaluated
+    private static Version latestVersion;
 
     /**
      * <p>Returns the version of <b>SMPHook</b> that is currently running on the user's system / server.</p>
@@ -49,16 +53,19 @@ public final class Version {
     }
 
     /**
-     * <p>Returns the latest-available version of <b>SMPHook</b> that is currently available on GitHub.</p>
+     * <p>Returns the latest-available <b>STABLE</b> version of <b>SMPHook</b> that is currently available on
+     *    GitHub.
+     * </p>
      * <p>Of course, this requires the user/server to be connected to the internet in-order for this factory to return
-     *    the latest {@code Version}. Hence, this factory returns a {@code Version} wrapped in an {@link Optional} type.
+     *    the latest <b>STABLE</b> <b>SMPHook</b> {@code Version}.
+     *    Hence, this factory returns a {@code Version} wrapped in an {@link Optional} type.
      * </p>
      *
      * @return an {@link Optional} that may contain the latest {@code Version} or not (due to network failure)
      * @since  v0.0.0-pre_alpha
      */
     public static Optional<Version> getLatestVersion() {
-        throw new UnsupportedOperationException("Not supported yet.");
+        return Optional.ofNullable(latestVersion);
     }
 
     /**
@@ -69,7 +76,7 @@ public final class Version {
      *    the end of the version string. For example:
      *    <pre><code>
      *        var version = getClientVersion(); // the current version is 1, 2, 3, ReleaseType.BETA
-     *        System.out.println(version); // output: 1.2.3-beta
+     *        System.out.println(version);      // output: 1.2.3-beta
      *    </code></pre>
      *    However, if the current {@code Version} is a <b>STABLE</b> release, then the version number is returned
      *    plainly.
@@ -109,9 +116,9 @@ public final class Version {
     }
 
     /**
-     * <p>Compares the {@code Version} with this {@code Version}.</p>
+     * <p>Compares the supplied {@code Version} object with this {@code Version} object.</p>
      *
-     * @param  version the {@code Version} to compare with this {@code Version}
+     * @param  version the {@code Version} object to compare with this {@code Version} object
      * @return         {@code true} if this {@code Version} is newer than the supplied {@code Version}; {@code false} if
      *                 otherwise
      * @author         Arsngrobg
@@ -123,7 +130,7 @@ public final class Version {
     }
 
     /**
-     * <p>Compares the unpacked {@code Version} with this {@code Version}.</p>
+     * <p>Compares the unpacked {@code Version} with this {@code Version} object.</p>
      *
      * @param  major   the <b>major</b> component of the unpacked {@code Version}
      * @param  minor   the <b>minor</b> component of the unpacked {@code Version}
@@ -149,7 +156,7 @@ public final class Version {
     }
 
     /**
-     * <p>This is the <b>major</b> component of this {@code Version}.</p>
+     * <p>This is the <b>major</b> component of this {@code Version} object.</p>
      * <p>This is modified when incompatible API changes occur.</p>
      *
      * @return this {@code Version}'s <b>major</b> component
@@ -160,7 +167,7 @@ public final class Version {
     }
 
     /**
-     * <p>This is the <b>minor</b> component of this {@code Version}.</p>
+     * <p>This is the <b>minor</b> component of this {@code Version} object.</p>
      * <p>This is modified when backward-compatible functionality changes occur.</p>
      *
      * @return this {@code Version}'s <b>minor</b> component
@@ -171,7 +178,7 @@ public final class Version {
     }
 
     /**
-     * <p>This is the <b>patch</b> component of this {@code Version}.</p>
+     * <p>This is the <b>patch</b> component of this {@code Version} object.</p>
      * <p>This is modified when backward-compatible bug fixes occur.</p>
      *
      * @return this {@code Version}'s <b>patch</b> component
@@ -182,7 +189,7 @@ public final class Version {
     }
 
     /**
-     * <p>This is the <b>release</b> metadata component of this {@code Version}.</p>
+     * <p>This is the <b>release</b> metadata component of this {@code Version} object.</p>
      *
      * @return this {@code Version}'s release component
      * @since  v0.0.0-pre_alpha

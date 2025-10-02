@@ -117,7 +117,8 @@ public final class MemorySize implements Comparable<MemorySize> {
      * <p>The memory units supported by most JVMs, and some extras that could <i>theoretically</i> be supported by the
      *    JVM.
      * </p>
-     * <p>It reaches a maximum of {@link Unit#EXABYTE} since that's the max scaler unit the 64-bit JVM can handle.</p>
+     * <p><b>NOTE: these are in binary representation, so {@code 1KB == 1024B}.</b></p>
+     * <p>It reaches a maximum of {@link Unit#EXBIBYTE} since that's the max scaler unit the 64-bit JVM can handle.</p>
      * <p>The ordinal value determines the difference in scale between each other unit scalar.</p>
      *
      * @author  Arsngrobg
@@ -125,13 +126,20 @@ public final class MemorySize implements Comparable<MemorySize> {
      * @version v1.0
      */
     public enum Unit {
+        /** <p>8b</p>      */
         BYTE,
-        KILOBYTE,
-        MEGABYTE,
-        GIGABYTE,
-        TERABYTE,
-        PETABYTE,
-        EXABYTE
+        /** <p>1024B</p>   */
+        KIBIBYTE,
+        /** <p>1024KiB</p> */
+        MEBIBYTE,
+        /** <p>1024MiB</p> */
+        GIBIBYTE,
+        /** <p>1024GiB</p> */
+        TEBIBYTE,
+        /** <p>1024TiB</p> */
+        PEBIBYTE,
+        /** <p>1024EiB</p> */
+        EXBIBYTE
     }
 
     private final long size;
