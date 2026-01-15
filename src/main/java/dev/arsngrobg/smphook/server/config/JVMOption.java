@@ -2,6 +2,7 @@ package dev.arsngrobg.smphook.server.config;
 
 import java.util.Arrays;
 import java.util.Objects;
+import java.util.Optional;
 
 /**
  * <p>The {@code JVMOption} data class represents a tangible object-representation of a Java Virtual Machine option.</p>
@@ -27,6 +28,71 @@ import java.util.Objects;
 @SuppressWarnings("ClassCanBeRecord")
 public final class JVMOption<T> {
     /**
+     * <p>Parses the raw, <i>assumed</i> valid, {@code JVMOption} {@code String} into its equivalent {@code JVMOption}
+     *    representation.
+     * </p>
+     * <p>This means that the operation:
+     *    <pre><code>
+     *        var option1 = JVMOption.parse("-verbose");
+     *        var option2 = JVMOption.parse(option1.toString());
+     *        System.out.printf("%s == %s", option1, option2); // output: -verbose == -verbose
+     *    </code></pre>
+     *    is bijective and invertible. Applying the operation is the exact inverse of {@code option1.toString()}.
+     * </p>
+     *
+     * @param   raw the assumed, valid, {@code String} representation of a {@code JVMOption} object
+     * @return      the equivalent {@code JVMOption}
+     * @author      Arsngrobg
+     * @since       0.0.2-pre-alpha
+     */
+    public static JVMOption<?> parse(String raw) throws IllegalArgumentException {
+        if (raw == null || raw.isBlank()) {
+            throw new IllegalArgumentException("raw cannot be null or empty");
+        }
+
+        Optional<Compliance> compliance = Arrays.stream(Compliance.values())
+                                                .filter(s -> raw.startsWith(s.prefix))
+                                                .findFirst();
+        if (compliance.isEmpty()) {
+            String[] prefixes = Arrays.stream(Compliance.values())
+                    .map(c -> String.format("\"%s\"", c.getPrefix()))
+                    .toArray(String[]::new);
+            throw new IllegalArgumentException(
+                    String.format("JVMOption must be prefixed with one of these prefix strings: %s",
+                            String.join(", ", prefixes)
+                    )
+            );
+        }
+
+        String         name;
+        ValueSeparator separator;
+        Object         value;
+
+        // TODO
+        String afterCompliance = raw.substring(compliance.get().getPrefix().length());
+        if (afterCompliance.startsWith("mx") || afterCompliance.startsWith("ms")) {
+            separator = ValueSeparator.NONE;
+            name      = afterCompliance.substring(0, 2);
+            value     = MemorySize.fromString(afterCompliance.substring(name.length()));
+        } else {
+            ValueSeparator[] otherSeparators = Arrays.stream(ValueSeparator.values())
+                                                     .filter(ValueSeparator::isNotNone)
+                                                     .toArray(ValueSeparator[]::new);
+            for (ValueSeparator s : otherSeparators) {
+                String[] keyValuePair = afterCompliance.split(String.valueOf(s.getChar()));
+                if (keyValuePair.length != 2) {
+                    continue;
+                }
+
+                name               = keyValuePair[0];
+                String valueString = keyValuePair[1];
+            }
+        }
+
+        return null;
+    }
+
+    /**
      * <p>The {@code Compliance} enum is the set of levels that a JVM option can have.</p>
      * <p>{@link Compliance#STANDARD} options are common, mostly generic options that tweak small things of the JVM.
      *    {@link Compliance#ADVANCED} options are for fine-tuning JVM performance. {@link Compliance#NON_STANDARD}
@@ -37,9 +103,15 @@ public final class JVMOption<T> {
      * @since  v0.0.2-pre_alpha
      */
     public enum Compliance {
-        STANDARD,
-        NON_STANDARD,
-        ADVANCED;
+        STANDARD    ("-"),
+        NON_STANDARD("-X"),
+        ADVANCED    ("-XX:");
+
+        private final String prefix;
+
+        Compliance(String prefix) {
+            this.prefix = prefix;
+        }
 
         /**
          * <p>Returns the prefix string for this {@code Compliance} level.</p>
@@ -48,12 +120,8 @@ public final class JVMOption<T> {
          * @author Arsngrobg
          * @since  v0.0.2-pre_alpha
          */
-        String getPrefix() {
-            return switch (this) {
-                case STANDARD     -> "-";
-                case NON_STANDARD -> "-X";
-                case ADVANCED     -> "-XX:";
-            };
+        public String getPrefix() {
+            return prefix;
         }
     }
 
@@ -74,9 +142,15 @@ public final class JVMOption<T> {
      * @see    ValueSeparator#getChar()
      */
     public enum ValueSeparator {
-        NONE,
-        COLON,
-        EQUALS;
+        NONE  (null),
+        COLON (':'),
+        EQUALS('=');
+
+        private final Character character;
+
+        ValueSeparator(Character character) {
+            this.character = character;
+        }
 
         /**
          * <p>Property that returns whether this {@code ValueSeparator} is <b>not</b> the {@link ValueSeparator#NONE}
@@ -106,11 +180,10 @@ public final class JVMOption<T> {
          * @see    ValueSeparator#isNotNone()
          */
         char getChar() throws IllegalArgumentException {
-            return switch (this) {
-                case NONE   -> throw new IllegalArgumentException("ValueSeparator.NONE has no character.");
-                case COLON  -> ':';
-                case EQUALS -> '=';
-            };
+            if (character == null) {
+                throw new IllegalArgumentException("ValueSeparator.NONE has no character.");
+            }
+            return character;
         }
     }
 
@@ -264,7 +337,7 @@ public final class JVMOption<T> {
     }
 
         public static void main(String[] args) {
-            JVMOption<?>[] options = {
+            final JVMOption<?>[] options = {
                 new JVMOption<>    (Compliance.STANDARD,     "Dprop",                       ValueSeparator.EQUALS,"Hello, World!"),
                 new JVMOption<>    (Compliance.NON_STANDARD, "ms",                          ValueSeparator.NONE,  "1g"),
                 new JVMOption<>    (Compliance.NON_STANDARD, "mx",                          ValueSeparator.NONE,  "8g"),
@@ -279,8 +352,9 @@ public final class JVMOption<T> {
                 new JVMOption<>    (Compliance.ADVANCED,     "G1HeapRegionSize",            ValueSeparator.EQUALS, "8M"),
                 new JVMOption<>    (Compliance.ADVANCED,     "UseNUMA",                     ValueSeparator.NONE,   true),
                 new JVMOption<>    (Compliance.ADVANCED,     "UseCompressedOops",           ValueSeparator.NONE,   true)
-        };
+            };
+            JVMOption.parse("sd");
 
-        Arrays.asList(options).forEach(System.out::println);
+            Arrays.asList(options).forEach(System.out::println);
     }
 }
