@@ -60,7 +60,7 @@ public final class MemorySize implements Comparable<MemorySize> {
      * @see           MemorySize#ofSize(long, Unit)
      * @see           MemorySize#ofBytes(long)
      */
-    public static MemorySize fromString(final String memStr) {
+    public static MemorySize fromString(final String memStr) throws IllegalArgumentException, NullPointerException {
         if (Objects.isNull(memStr)) throw new NullPointerException("memStr");
         if (memStr.isBlank()) throw new IllegalArgumentException("memStr cannot be blank");
 
