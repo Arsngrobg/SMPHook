@@ -13,9 +13,9 @@ import java.util.stream.Stream;
  * </p>
  * <p>This class provides <b>three</b> factories for wrapping raw values:
  *    <pre><code>
- *        var size = MemorySize.ofSize(20, Unit.MEGABYTE); // MemorySize[size: 20, unit: MEGABYTE]
- *        var size = MemorySize.ofBytes(20_971_520); // implicitly converts to MemorySize of 20M
- *        var size = MemorySize.fromString("4G"); // MemorySize[size: 4, unit: GIGABYTE]
+ *        var size = MemorySize.of(20, Unit.MEGABYTE); // MemorySize[size: 20, unit: MEGABYTE]
+ *        var size = MemorySize.ofBytes(20_971_520);   // implicitly converts to MemorySize of 20M
+ *        var size = MemorySize.fromString("4G");      // MemorySize[size: 4, unit: GIGABYTE]
  *    </code></pre>
  * </p>
  * <p>As mentioned previously, the {@code MemorySize} value class can be compared with other {@code MemorySize} objects.
@@ -32,7 +32,7 @@ import java.util.stream.Stream;
  * @since   v0.0.1-pre_alpha
  * @version v1.2
  * @see     MemorySize.Unit
- * @see     MemorySize#ofSize(long, Unit)
+ * @see     MemorySize#of(long, Unit)
  * @see     MemorySize#ofBytes(long)
  * @see     MemorySize#fromString(String) 
  */
@@ -57,7 +57,7 @@ public final class MemorySize implements Comparable<MemorySize> {
      * @return        a new {@code MemorySize} object, represented by the supplied {@code memStr}
      * @author        Arsngrobg
      * @since         v0.0.1-pre_alpha
-     * @see           MemorySize#ofSize(long, Unit)
+     * @see           MemorySize#of(long, Unit)
      * @see           MemorySize#ofBytes(long)
      */
     public static MemorySize fromString(final String memStr) throws IllegalArgumentException, NullPointerException {
@@ -76,17 +76,19 @@ public final class MemorySize implements Comparable<MemorySize> {
         final int subStrEnd = maybeUnit.isPresent() ? memStr.length() - 1 : memStr.length();
         final long size = Integer.parseInt(memStr.substring(0, subStrEnd));
 
-        return maybeUnit.map(u -> MemorySize.ofSize(size, u))
+        return maybeUnit.map(u -> MemorySize.of(size, u))
                         .orElse(MemorySize.ofBytes(size));
     }
 
     /**
-     * <p>This is a factory for creating a {@code MemorySize} from a number of {@code bytes}.</p>
-     * <p>
+     * <p>This is a factory for creating a {@code MemorySize} from a number of {@code bytes}.
      *    <pre><code>
-     *        var bytes = MemorySize.ofBytes(1024);
-     *        System.out.println(bytes); // output: 1024B
+     *        var bytes = MemorySize.ofBytes(MemorySize.BYTES_PER_KILOBYTE);
+     *        System.out.println(bytes); // output: 1K
      *    </code></pre>
+     * </p>
+     * <p>This factory will try to produce the {@code MemorySize} of the smallest representation using the provided
+     *    {@code bytes}.
      * </p>
      *
      * @param  bytes the number of whole bytes that this {@code MemorySize} will carry
@@ -95,11 +97,23 @@ public final class MemorySize implements Comparable<MemorySize> {
      * @since        v0.0.1-pre_alpha
      */
     public static MemorySize ofBytes(final long bytes) {
-        return MemorySize.ofSize(bytes, Unit.BYTE);
+        int power;
+        for (power = 1; power < Unit.values().length - 1; power++) {
+            long asUnit = bytes / (long) (Math.pow(BYTES_PER_KILOBYTE, power));
+            if (asUnit < MemorySize.BYTES_PER_KILOBYTE) {
+                break;
+            }
+        }
+        return MemorySize.of(bytes, Unit.BYTE).toUnit(Unit.values()[power]);
     }
 
     /**
-     * <p>This is the generic factory for creating a {@code MemorySize} object.</p>
+     * <p>This is the generic factory for creating a {@code MemorySize} object.
+     *    <pre><code>
+     *        var memSize = MemorySize.of(12, MemorySize.Unit.GIGABYTE);
+     *        System.out.println(memSize); // output: 12G
+     *    </code></pre>
+     * </p>
      *
      * @param  size the relative 64-bit size for this
      * @param  unit the scaling component
@@ -107,7 +121,7 @@ public final class MemorySize implements Comparable<MemorySize> {
      * @author      Arsngrobg
      * @since       v0.0.1-pre_alpha
      */
-    public static MemorySize ofSize(final long size, final Unit unit) {
+    public static MemorySize of(final long size, final Unit unit) {
         if (size <= 0) throw new IllegalArgumentException("Size must be positive");
         if (unit == null) throw new NullPointerException("unit");
         return new MemorySize(size, unit);
@@ -151,8 +165,7 @@ public final class MemorySize implements Comparable<MemorySize> {
     }
 
     /**
-     * <p>Converts this {@code MemorySize} into another {@code MemorySize} of the supplied {@code unit}.</p>
-     * <p>The {@code unit} must be ordinally-lower than this {@code MemorySize}'s {@link Unit}.
+     * <p>Converts this {@code MemorySize} into another {@code MemorySize} of the supplied {@code unit}.
      *    <pre><code>
      *        var size = MemorySize.fromString("1K");
      *        var bytes = size.toUnit(Unit.BYTE);
@@ -167,14 +180,30 @@ public final class MemorySize implements Comparable<MemorySize> {
      * @since       v0.0.1-pre_alpha
      */
     public MemorySize toUnit(Unit unit) {
-        if (this.unit.ordinal() < unit.ordinal()) {
-            throw new IllegalStateException("Cannot convert MemorySize to a higher unit.");
-        }
+        int diff = this.unit.ordinal() - unit.ordinal();
+        // size--
+        if (diff < 0) { // < unit.ordinal()
+            long divisor = (long) Math.pow(MemorySize.BYTES_PER_KILOBYTE, -diff);
+            if (divisor > size) {
+                // TODO: throw ClientError
+            }
 
-        return MemorySize.ofSize(
-                this.size * (MemorySize.BYTES_PER_KILOBYTE * (this.unit.ordinal() - unit.ordinal())),
-                unit
-        );
+            // will division lose information?
+            long remainder = size % divisor;
+            if (remainder != 0) {
+                // TODO: throw ClientError
+            }
+
+            return MemorySize.of(size / divisor, unit);
+        }
+        // size++
+        else if (diff > 0) { // > unit.ordinal()
+            long factor = (long) Math.pow(MemorySize.BYTES_PER_KILOBYTE, diff);
+            return MemorySize.of(size * factor, unit);
+        // this is fine, all instances are immutable
+        } else {
+            return this;
+        }
     }
 
     @Override
@@ -237,5 +266,10 @@ public final class MemorySize implements Comparable<MemorySize> {
     @Override
     public String toString() {
         return String.format("%d%s", size, unit.name().charAt(0));
+    }
+
+    public static void main(String[] args) {
+        var memSize = MemorySize.ofBytes(1024L * 1024L * 20L);
+        System.out.println(memSize);
     }
 }
