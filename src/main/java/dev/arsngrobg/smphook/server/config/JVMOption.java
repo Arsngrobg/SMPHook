@@ -164,7 +164,7 @@ public final class JVMOption<T> {
          * @since  v0.0.2-pre_alpha
          */
         boolean isNotNone() {
-            return character == null;
+            return character != null;
         }
 
         /**
