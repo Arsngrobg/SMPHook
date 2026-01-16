@@ -164,7 +164,7 @@ public final class JVMOption<T> {
          * @since  v0.0.2-pre_alpha
          */
         boolean isNotNone() {
-            return this != ValueSeparator.NONE;
+            return character == null;
         }
 
         /**
