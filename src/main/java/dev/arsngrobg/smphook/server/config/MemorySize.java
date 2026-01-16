@@ -228,7 +228,10 @@ public final class MemorySize implements Comparable<MemorySize> {
         if (obj == null) return false;
         if (obj == this) return true;
         if (!(obj instanceof MemorySize asMemSize)) return false;
-        return size == asMemSize.getSize() && unit == asMemSize.getUnit();
+        return (
+                size == asMemSize.getSize() &&
+                unit == asMemSize.getUnit()
+        );
     }
 
     @Override

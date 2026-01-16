@@ -192,7 +192,11 @@ public final class JVMOption<T> {
     private final ValueSeparator valueSeparator;
     private final T              value;
 
-    private JVMOption(final Compliance compliance, final String name, final ValueSeparator valueSeparator, final T value) {
+    private JVMOption(final Compliance compliance,
+                      final String name,
+                      final ValueSeparator valueSeparator,
+                      final T value
+    ) {
         this.compliance     = compliance;
         this.name           = name;
         this.valueSeparator = valueSeparator;
@@ -297,7 +301,9 @@ public final class JVMOption<T> {
      * @see    JVMOption#hasValue()
      */
     public T getValue() throws IllegalAccessError {
-        if (!hasValue()) throw new IllegalAccessError(String.format("The JVMOption \"%s\" has no value.", this));
+        if (!hasValue()) {
+            throw new IllegalAccessError(String.format("The JVMOption \"%s\" has no value.", this));
+        }
         return value;
     }
 
