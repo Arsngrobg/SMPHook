@@ -30,7 +30,7 @@ import java.util.stream.Stream;
  *
  * @author  Arsngrobg
  * @since   v0.0.1-pre_alpha
- * @version v1.2
+ * @version v1.3
  * @see     MemorySize.Unit
  * @see     MemorySize#of(long, Unit)
  * @see     MemorySize#ofBytes(long)
@@ -97,14 +97,15 @@ public final class MemorySize implements Comparable<MemorySize> {
      * @since        v0.0.1-pre_alpha
      */
     public static MemorySize ofBytes(final long bytes) {
-        int power;
-        for (power = 1; power < Unit.values().length - 1; power++) {
-            long asUnit = bytes / (long) (Math.pow(BYTES_PER_KILOBYTE, power));
-            if (asUnit < MemorySize.BYTES_PER_KILOBYTE) {
-                break;
+        for (int power = Unit.values().length; power > 1; power--) {
+            long divisor = (long) (Math.pow(BYTES_PER_KILOBYTE, power));
+            long remainder = bytes % divisor;
+            if (remainder == 0) {
+                return MemorySize.of(bytes, Unit.BYTE).toUnit(Unit.values()[power]);
             }
         }
-        return MemorySize.of(bytes, Unit.BYTE).toUnit(Unit.values()[power]);
+
+        return MemorySize.of(bytes, Unit.BYTE);
     }
 
     /**
@@ -115,7 +116,7 @@ public final class MemorySize implements Comparable<MemorySize> {
      *    </code></pre>
      * </p>
      *
-     * @param  size the relative 64-bit size for this
+     * @param  size the relative 64-bit size for this {@code MemorySize}
      * @param  unit the scaling component
      * @return      a new {@code MemorySize} object of the desired {@code size} and {@code unit}
      * @author      Arsngrobg
@@ -225,7 +226,7 @@ public final class MemorySize implements Comparable<MemorySize> {
     }
 
     /**
-     * <p>Returns the 64-bit long value representing this memory size in the relative scale of its {@code unit}.</p>
+     * <p>Returns the 64-bit integer value representing this memory size in the relative scale of its {@code unit}.</p>
      *
      * @return the size of this {@code MemorySize}
      * @author Arsngrobg
@@ -266,10 +267,5 @@ public final class MemorySize implements Comparable<MemorySize> {
     @Override
     public String toString() {
         return String.format("%d%s", size, unit.name().charAt(0));
-    }
-
-    public static void main(String[] args) {
-        var memSize = MemorySize.ofBytes(1024L * 1024L * 20L);
-        System.out.println(memSize);
     }
 }
