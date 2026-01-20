@@ -1,5 +1,7 @@
 package dev.arsngrobg.smphook.server.config;
 
+import dev.arsngrobg.smphook.core.ClientError;
+
 import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Stream;
@@ -13,19 +15,20 @@ import java.util.stream.Stream;
  * </p>
  * <p>This class provides <b>three</b> factories for wrapping raw values:
  *    <pre><code>
- *        var size = MemorySize.of(20, Unit.MEGABYTE); // MemorySize[size: 20, unit: MEGABYTE]
- *        var size = MemorySize.ofBytes(20_971_520);   // implicitly converts to MemorySize of 20M
- *        var size = MemorySize.fromString("4G");      // MemorySize[size: 4, unit: GIGABYTE]
+ *        var size1 = MemorySize.of(20, Unit.MEGABYTE); // MemorySize[size: 20, unit: MEGABYTE]
+ *        var size2 = MemorySize.ofBytes(20_971_520);   // implicitly converts to MemorySize of 20M
+ *        var size3 = MemorySize.fromString("4G");      // MemorySize[size: 4, unit: GIGABYTE]
  *    </code></pre>
  * </p>
  * <p>As mentioned previously, the {@code MemorySize} value class can be compared with other {@code MemorySize} objects.
  *    <pre><code>
  *        var size1 = MemorySize.fromString("1025B");
  *        var size2 = MemorySize.fromString("1K"); // equivalent to 1024B
- *        var cmp = size1.compareTo(size2);
+ *        var cmp   = size1.compareTo(size2);
  *        System.out.println(cmp); // outputs 1 - size1 is greater than size2
  *    </code></pre>
- *    It performs relative comparisons using both {@code MemorySize}'s {@link Unit}s.
+ *    It performs relative comparisons using both {@code MemorySize}'s {@link Unit}s to reduce chance of integer
+ *    overflow.
  * </p>
  *
  * @author  Arsngrobg
@@ -53,28 +56,29 @@ public final class MemorySize implements Comparable<MemorySize> {
      *    represent 20 bytes of memory/data.
      * </p>
      *
-     * @param  memStr the string representation to reverse engineer the {@code MemorySize}
-     * @return        a new {@code MemorySize} object, represented by the supplied {@code memStr}
-     * @author        Arsngrobg
-     * @since         v0.0.1-pre_alpha
-     * @see           MemorySize#of(long, Unit)
-     * @see           MemorySize#ofBytes(long)
+     * @param  memStr      the string representation to reverse engineer the {@code MemorySize}
+     * @return             a new {@code MemorySize} object, represented by the supplied {@code memStr}
+     * @throws ClientError if {@code memStr} is {@code null}, empty, or is invalid
+     * @author             Arsngrobg
+     * @since              v0.0.1-pre_alpha
+     * @see                MemorySize#of(long, Unit)
+     * @see                MemorySize#ofBytes(long)
      */
-    public static MemorySize fromString(final String memStr) throws IllegalArgumentException, NullPointerException {
-        if (Objects.isNull(memStr)) throw new NullPointerException("memStr");
-        if (memStr.isBlank()) throw new IllegalArgumentException("memStr cannot be blank");
+    public static MemorySize fromString(String memStr) throws ClientError {
+        if (memStr == null)   throw ClientError.ofNullReference("memStr");
+        if (memStr.isBlank()) throw ClientError.withMessage("memStr cannot be blank");
 
-        final char lastChar = memStr.charAt(memStr.length() - 1);
-        final Optional<Unit> maybeUnit = Stream.of(Unit.values())
+        char lastChar = memStr.charAt(memStr.length() - 1);
+        Optional<Unit> maybeUnit = Stream.of(Unit.values())
                                                .filter(u -> u.name().charAt(0) == lastChar)
                                                .findFirst();
 
         if (maybeUnit.isEmpty() && !Character.isDigit(lastChar)) {
-            throw new IllegalArgumentException("memStr contains illegal unit suffix.");
+            throw ClientError.withMessage("memStr contains illegal unit suffix.");
         }
 
-        final int subStrEnd = maybeUnit.isPresent() ? memStr.length() - 1 : memStr.length();
-        final long size = Integer.parseInt(memStr.substring(0, subStrEnd));
+        int subStrEnd = maybeUnit.isPresent() ? memStr.length() - 1 : memStr.length();
+        long size = Integer.parseInt(memStr.substring(0, subStrEnd));
 
         return maybeUnit.map(u -> MemorySize.of(size, u))
                         .orElse(MemorySize.ofBytes(size));
@@ -96,7 +100,7 @@ public final class MemorySize implements Comparable<MemorySize> {
      * @author       Arsngrobg
      * @since        v0.0.1-pre_alpha
      */
-    public static MemorySize ofBytes(final long bytes) {
+    public static MemorySize ofBytes(long bytes) {
         for (int power = Unit.values().length; power > 1; power--) {
             long divisor = (long) (Math.pow(BYTES_PER_KILOBYTE, power));
             long remainder = bytes % divisor;
@@ -116,15 +120,16 @@ public final class MemorySize implements Comparable<MemorySize> {
      *    </code></pre>
      * </p>
      *
-     * @param  size the relative 64-bit size for this {@code MemorySize}
-     * @param  unit the scaling component
-     * @return      a new {@code MemorySize} object of the desired {@code size} and {@code unit}
-     * @author      Arsngrobg
-     * @since       v0.0.1-pre_alpha
+     * @param  size        the relative 64-bit size for this {@code MemorySize}
+     * @param  unit        the scaling component
+     * @return             a new {@code MemorySize} object of the desired {@code size} and {@code unit}
+     * @throws ClientError if {@code size} is less than {@code 0}, or {@code unit} is {@code null}
+     * @author             Arsngrobg
+     * @since              v0.0.1-pre_alpha
      */
-    public static MemorySize of(final long size, final Unit unit) {
-        if (size <= 0) throw new IllegalArgumentException("Size must be positive");
-        if (unit == null) throw new NullPointerException("unit");
+    public static MemorySize of(long size, Unit unit) throws ClientError {
+        if (size <= 0)    throw ClientError.withMessage("Size must be positive");
+        if (unit == null) throw ClientError.ofNullReference("unit");
         return new MemorySize(size, unit);
     }
 
@@ -160,7 +165,7 @@ public final class MemorySize implements Comparable<MemorySize> {
     private final long size;
     private final Unit unit;
 
-    public MemorySize(final long size, final Unit unit) {
+    public MemorySize(long size, Unit unit) {
         this.size = size;
         this.unit = unit;
     }
@@ -185,14 +190,10 @@ public final class MemorySize implements Comparable<MemorySize> {
         // size--
         if (diff < 0) { // < unit.ordinal()
             long divisor = (long) Math.pow(MemorySize.BYTES_PER_KILOBYTE, -diff);
-            if (divisor > size) {
-                // TODO: throw ClientError
-            }
-
-            // will division lose information?
             long remainder = size % divisor;
             if (remainder != 0) {
-                // TODO: throw ClientError
+                String message = String.format("Cannot represent %s in %ss", this, unit.name().toLowerCase());
+                throw ClientError.withMessage(message);
             }
 
             return MemorySize.of(size / divisor, unit);
@@ -209,11 +210,11 @@ public final class MemorySize implements Comparable<MemorySize> {
 
     @Override
     public int compareTo(MemorySize o) {
-        final int unitDiff = unit.ordinal() - o.getUnit().ordinal();
-        final int absUnitDiff = Math.abs(unitDiff);
+        int unitDiff = unit.ordinal() - o.getUnit().ordinal();
+        int absUnitDiff = Math.abs(unitDiff);
 
         // compares relatively with their units
-        final long thisSize, otherSize;
+        long thisSize, otherSize;
         if (unitDiff >= 0) {
             thisSize  = this.size * (long) Math.pow(MemorySize.BYTES_PER_KILOBYTE, absUnitDiff);
             otherSize = o.getSize();

@@ -1,8 +1,9 @@
 package dev.arsngrobg.smphook.server.config;
 
+import dev.arsngrobg.smphook.core.ClientError;
+
 import java.util.Arrays;
 import java.util.Objects;
-import java.util.Optional;
 
 /**
  * <p>The {@code JVMOption} data class represents a tangible object-representation of a Java Virtual Machine option.</p>
@@ -23,75 +24,11 @@ import java.util.Optional;
  * @param  <T> the type of the {@code value} it holds
  * @author     Arsngrobg
  * @since      v0.0.2-pre_alpha
+ * @version    v1.0
  * @see        JVMOption#parse(String)
  */
 @SuppressWarnings("ClassCanBeRecord")
 public final class JVMOption<T> {
-    /**
-     * <p>Parses the raw, <i>assumed</i> valid, {@code JVMOption} {@code String} into its equivalent {@code JVMOption}
-     *    representation.
-     * </p>
-     * <p>This means that the operation:
-     *    <pre><code>
-     *        var option1 = JVMOption.parse("-verbose");
-     *        var option2 = JVMOption.parse(option1.toString());
-     *        System.out.printf("%s == %s", option1, option2); // output: -verbose == -verbose
-     *    </code></pre>
-     *    is bijective and invertible. Applying the operation is the exact inverse of {@code option1.toString()}.
-     * </p>
-     *
-     * @param   raw the assumed, valid, {@code String} representation of a {@code JVMOption} object
-     * @return      the equivalent {@code JVMOption}
-     * @author      Arsngrobg
-     * @since       0.0.2-pre-alpha
-     */
-    public static JVMOption<?> parse(String raw) throws IllegalArgumentException {
-        if (raw == null || raw.isBlank()) {
-            throw new IllegalArgumentException("raw cannot be null or empty");
-        }
-
-        Optional<Compliance> compliance = Arrays.stream(Compliance.values())
-                                                .filter(s -> raw.startsWith(s.prefix))
-                                                .findFirst();
-        if (compliance.isEmpty()) {
-            String[] prefixes = Arrays.stream(Compliance.values())
-                    .map(c -> String.format("\"%s\"", c.getPrefix()))
-                    .toArray(String[]::new);
-            throw new IllegalArgumentException(
-                    String.format("JVMOption must be prefixed with one of these prefix strings: %s",
-                            String.join(", ", prefixes)
-                    )
-            );
-        }
-
-        String         name;
-        ValueSeparator separator;
-        Object         value;
-
-        // TODO
-        String afterCompliance = raw.substring(compliance.get().getPrefix().length());
-        if (afterCompliance.startsWith("mx") || afterCompliance.startsWith("ms")) {
-            separator = ValueSeparator.NONE;
-            name      = afterCompliance.substring(0, 2);
-            value     = MemorySize.fromString(afterCompliance.substring(name.length()));
-        } else {
-            ValueSeparator[] otherSeparators = Arrays.stream(ValueSeparator.values())
-                                                     .filter(ValueSeparator::isNotNone)
-                                                     .toArray(ValueSeparator[]::new);
-            for (ValueSeparator s : otherSeparators) {
-                String[] keyValuePair = afterCompliance.split(String.valueOf(s.getChar()));
-                if (keyValuePair.length != 2) {
-                    continue;
-                }
-
-                name               = keyValuePair[0];
-                String valueString = keyValuePair[1];
-            }
-        }
-
-        return null;
-    }
-
     /**
      * <p>The {@code Compliance} enum is the set of levels that a JVM option can have.</p>
      * <p>{@link Compliance#STANDARD} options are common, mostly generic options that tweak small things of the JVM.
@@ -169,8 +106,8 @@ public final class JVMOption<T> {
 
         /**
          * <p>Returns the character that this {@code ValueSeparator} represents.</p>
-         * <p>If this {@code ValueSeparator} is {@link ValueSeparator#NONE} then the method will throw an
-         *    {@link IllegalArgumentException} - as it does not have a character. Always test this
+         * <p>If this {@code ValueSeparator} is {@link ValueSeparator#NONE} then the method will throw a
+         *    {@link ClientError} - as it does not have a character. Always test this
          *    {@code ValueSeparator} using the {@link ValueSeparator#isNotNone()} property.
          * </p>
          *
@@ -179,9 +116,9 @@ public final class JVMOption<T> {
          * @since  v0.0.2-pre_alpha
          * @see    ValueSeparator#isNotNone()
          */
-        char getChar() throws IllegalArgumentException {
+        char getChar() throws ClientError {
             if (character == null) {
-                throw new IllegalArgumentException("ValueSeparator.NONE has no character.");
+                throw ClientError.withMessage("ValueSeparater.NONE has no character.");
             }
             return character;
         }
@@ -192,11 +129,7 @@ public final class JVMOption<T> {
     private final ValueSeparator valueSeparator;
     private final T              value;
 
-    private JVMOption(final Compliance compliance,
-                      final String name,
-                      final ValueSeparator valueSeparator,
-                      final T value
-    ) {
+    private JVMOption(Compliance compliance, String name, ValueSeparator valueSeparator, T value) {
         this.compliance     = compliance;
         this.name           = name;
         this.valueSeparator = valueSeparator;
@@ -291,18 +224,16 @@ public final class JVMOption<T> {
 
     /**
      * <p>Returns the value held by this {@code JVMOption}.</p>
-     * <p>If there is no value present ({@code value == null}) then this method will throw an
-     *    {@link IllegalAccessError}.
-     * </p>
+     * <p>If there is no value present ({@code value == null}) then this method will throw a {@link ClientError}. </p>
      *
      * @return the value held by this {@code JVMOption}
      * @author Arsngrobg
      * @since  v0.0.2-pre_alpha
      * @see    JVMOption#hasValue()
      */
-    public T getValue() throws IllegalAccessError {
+    public T getValue() throws ClientError {
         if (!hasValue()) {
-            throw new IllegalAccessError(String.format("The JVMOption \"%s\" has no value.", this));
+            throw ClientError.withMessage(String.format("The JVMOption \"%s\" has no value.", this));
         }
         return value;
     }
@@ -342,25 +273,25 @@ public final class JVMOption<T> {
         return stringBuilder.toString();
     }
 
-        public static void main(String[] args) {
-            final JVMOption<?>[] options = {
-                new JVMOption<>    (Compliance.STANDARD,     "Dprop",                       ValueSeparator.EQUALS,"Hello, World!"),
-                new JVMOption<>    (Compliance.NON_STANDARD, "ms",                          ValueSeparator.NONE,  "1g"),
-                new JVMOption<>    (Compliance.NON_STANDARD, "mx",                          ValueSeparator.NONE,  "8g"),
-                new JVMOption<Void>(Compliance.STANDARD,     "server",                      ValueSeparator.NONE,   null),
-                new JVMOption<>    (Compliance.STANDARD,     "verbose",                     ValueSeparator.COLON,  "gc"),
-                new JVMOption<>    (Compliance.STANDARD,     "javaagent",                   ValueSeparator.COLON,  "/path/to/agent.jar"),
-                new JVMOption<>    (Compliance.ADVANCED,     "UnlockExperimentalVMOptions", ValueSeparator.NONE,   true),
-                new JVMOption<>    (Compliance.ADVANCED,     "UseG1GC",                     ValueSeparator.NONE,   true),
-                new JVMOption<>    (Compliance.ADVANCED,     "UseStringDeduplication",      ValueSeparator.NONE,   true),
-                new JVMOption<>    (Compliance.ADVANCED,     "G1NewSizePercent",            ValueSeparator.EQUALS, 20),
-                new JVMOption<>    (Compliance.ADVANCED,     "G1MaxNewSizePercent",         ValueSeparator.EQUALS, 40),
-                new JVMOption<>    (Compliance.ADVANCED,     "G1HeapRegionSize",            ValueSeparator.EQUALS, "8M"),
-                new JVMOption<>    (Compliance.ADVANCED,     "UseNUMA",                     ValueSeparator.NONE,   true),
-                new JVMOption<>    (Compliance.ADVANCED,     "UseCompressedOops",           ValueSeparator.NONE,   true)
-            };
-            JVMOption.parse("sd");
+    public static void main(String[] args) {
+        final JVMOption<?>[] options = {
+            new JVMOption<>    (Compliance.STANDARD,     "Dprop",                       ValueSeparator.EQUALS,"Hello, World!"),
+            new JVMOption<>    (Compliance.NON_STANDARD, "ms",                          ValueSeparator.NONE,  "1g"),
+            new JVMOption<>    (Compliance.NON_STANDARD, "mx",                          ValueSeparator.NONE,  "8g"),
+            new JVMOption<Void>(Compliance.STANDARD,     "server",                      ValueSeparator.NONE,   null),
+            new JVMOption<>    (Compliance.STANDARD,     "verbose",                     ValueSeparator.COLON,  "gc"),
+            new JVMOption<>    (Compliance.STANDARD,     "javaagent",                   ValueSeparator.COLON,  "/path/to/agent.jar"),
+            new JVMOption<>    (Compliance.ADVANCED,     "UnlockExperimentalVMOptions", ValueSeparator.NONE,   true),
+            new JVMOption<>    (Compliance.ADVANCED,     "UseG1GC",                     ValueSeparator.NONE,   true),
+            new JVMOption<>    (Compliance.ADVANCED,     "UseStringDeduplication",      ValueSeparator.NONE,   true),
+            new JVMOption<>    (Compliance.ADVANCED,     "G1NewSizePercent",            ValueSeparator.EQUALS, 20),
+            new JVMOption<>    (Compliance.ADVANCED,     "G1MaxNewSizePercent",         ValueSeparator.EQUALS, 40),
+            new JVMOption<>    (Compliance.ADVANCED,     "G1HeapRegionSize",            ValueSeparator.EQUALS, "8M"),
+            new JVMOption<>    (Compliance.ADVANCED,     "UseNUMA",                     ValueSeparator.NONE,   true),
+            new JVMOption<>    (Compliance.ADVANCED,     "UseCompressedOops",           ValueSeparator.NONE,   true)
+        };
+        //JVMOption.parse("sd");
 
-            Arrays.asList(options).forEach(System.out::println);
+        Arrays.asList(options).forEach(System.out::println);
     }
 }
