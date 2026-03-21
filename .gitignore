@@ -1,9 +1,6 @@
 # Test server
 /smp
 
-# Project folders
-/.idea
-
 # Maven
 /target
 /.mvn
@@ -34,3 +31,12 @@ mvnw.cmd
 # virtual machine crash logs, see http://www.java.com/en/download/help/error_hotspot.xml
 hs_err_pid*
 replay_pid*
+
+# Ignore Gradle project-specific cache directory
+.gradle
+
+# Ignore Gradle build output directory
+build
+
+# Ignore Kotlin plugin data
+.kotlin
