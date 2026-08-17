@@ -1,3 +1,3 @@
 rootProject.name = "Paralax"
 
-include(":paralax.panel")
+include(":paralax-panel")
