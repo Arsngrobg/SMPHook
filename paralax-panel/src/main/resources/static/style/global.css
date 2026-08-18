@@ -1,0 +1,23 @@
+html, body {
+    margin: 0px;
+}
+
+html {
+    background-color: rgb(30, 41, 59);
+}
+
+#nav {
+    background-color: rgb(19, 28, 46);
+    width:            100%;
+    display:          flex;
+}
+
+#nav * {
+    width: 50%;
+    justify-items: center;
+}
+
+#nav-buttons ul {
+    list-style-type: none;
+    display: flex;
+}
